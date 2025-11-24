@@ -1,67 +1,219 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { EventService } from '../../services/event.service';
 import { User } from '../../models/user.model';
+import { Event } from '../../models/event.model';
+
+type TabType = 'my-events' | 'invited-events';
+type FilterType = 'all' | 'upcoming' | 'past';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss'
+  styleUrls: ['./dashboard.scss']
 })
 export class DashboardComponent implements OnInit {
   currentUser: User | null = null;
+
+  // Events data
+  myEvents: Event[] = [];
+  invitedEvents: Event[] = [];
+  displayedEvents: Event[] = [];
+
+  // UI State
+  activeTab: TabType = 'my-events';
   isLoading: boolean = true;
-  errorMessage: string = '';
+  isLoadingEvents: boolean = false;
+  error: string | null = null;
+
+  // Search and Filter
+  searchQuery: string = '';
+  activeFilter: FilterType = 'all';
+
+  // Delete confirmation
+  showDeleteDialog: boolean = false;
+  eventToDelete: Event | null = null;
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private eventService: EventService,
+    public router: Router
   ) { }
 
   ngOnInit(): void {
-    this.loadUserData();
+    this.currentUser = this.authService.getCurrentUser();
+
+    if (!this.currentUser || !this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.isLoading = false;
+    this.loadEvents();
   }
 
-  private loadUserData(): void {
-    this.isLoading = true;
-    try {
-      this.currentUser = this.authService.getCurrentUser();
-      
-      if (!this.currentUser || !this.authService.isLoggedIn()) {
-        this.handleUnauthorizedAccess();
-        return;
-      }
+  loadEvents(): void {
+    this.isLoadingEvents = true;
+    this.error = null;
 
-    } catch (error) {
-      this.handleError(error);
-    } finally {
-      this.isLoading = false;
+    const role = this.activeTab === 'my-events' ? 'organizer' : 'attendee';
+
+    this.eventService.getEvents(role).subscribe({
+      next: (response) => {
+        if (this.activeTab === 'my-events') {
+          this.myEvents = response.events || [];
+        } else {
+          this.invitedEvents = response.events || [];
+        }
+        this.updateDisplayedEvents();
+        this.isLoadingEvents = false;
+      },
+      error: (error) => {
+        this.error = error.error || 'Failed to load events';
+        this.isLoadingEvents = false;
+        console.error('Error loading events:', error);
+      }
+    });
+  }
+
+  switchTab(tab: TabType): void {
+    if (this.activeTab === tab) return;
+
+    this.activeTab = tab;
+    this.searchQuery = '';
+    this.activeFilter = 'all';
+
+    // Only load if data hasn't been loaded yet
+    if (tab === 'my-events' && this.myEvents.length === 0) {
+      this.loadEvents();
+    } else if (tab === 'invited-events' && this.invitedEvents.length === 0) {
+      this.loadEvents();
+    } else {
+      this.updateDisplayedEvents();
     }
   }
 
-  private handleUnauthorizedAccess(): void {
-    this.errorMessage = 'Please log in to access the dashboard';
-    this.router.navigate(['/login']);
+  updateDisplayedEvents(): void {
+    let events = this.activeTab === 'my-events' ? this.myEvents : this.invitedEvents;
+
+    // Apply filter
+    if (this.activeFilter === 'upcoming') {
+      events = events.filter(e => e.status === 'upcoming');
+    } else if (this.activeFilter === 'past') {
+      events = events.filter(e => e.status === 'past');
+    }
+
+    // Apply search
+    if (this.searchQuery.trim()) {
+      const query = this.searchQuery.toLowerCase();
+      events = events.filter(e =>
+        e.title.toLowerCase().includes(query) ||
+        (e.description && e.description.toLowerCase().includes(query)) ||
+        (e.location && e.location.toLowerCase().includes(query))
+      );
+    }
+
+    this.displayedEvents = events;
   }
 
-  private handleError(error: any): void {
-    console.error('Dashboard error:', error);
-    this.errorMessage = 'An error occurred while loading your data';
+  onSearchChange(): void {
+    this.updateDisplayedEvents();
+  }
+
+  setFilter(filter: FilterType): void {
+    this.activeFilter = filter;
+    this.updateDisplayedEvents();
+  }
+
+  viewEvent(event: Event): void {
+    // Navigate to event details page
+    this.router.navigate(['/events', event.id]);
+  }
+
+  confirmDelete(event: Event): void {
+    if (event.role !== 'organizer') {
+      return; // Only organizers can delete
+    }
+    this.eventToDelete = event;
+    this.showDeleteDialog = true;
+  }
+
+  cancelDelete(): void {
+    this.showDeleteDialog = false;
+    this.eventToDelete = null;
+  }
+
+  deleteEvent(): void {
+    if (!this.eventToDelete) return;
+
+    const eventId = this.eventToDelete.id;
+
+    this.eventService.deleteEvent(eventId).subscribe({
+      next: () => {
+        // Remove from local array
+        this.myEvents = this.myEvents.filter(e => e.id !== eventId);
+        this.updateDisplayedEvents();
+        this.cancelDelete();
+      },
+      error: (error) => {
+        this.error = error.error || 'Failed to delete event';
+        this.cancelDelete();
+      }
+    });
+  }
+
+  retryLoad(): void {
+    this.loadEvents();
+  }
+
+  goToCreateEvent(): void {
+    this.router.navigate(['/events/create']);
   }
 
   logout(): void {
-    try {
-      this.authService.logout();
-      this.router.navigate(['/login']);
-    } catch (error) {
-      this.handleError(error);
-    }
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
-  goToLogin(): void {
-    this.router.navigate(['/login']);
+  // Helper method to format date
+  formatDate(date: string): string {
+    return new Date(date).toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  // Helper method to check if event is upcoming
+  isUpcoming(event: Event): boolean {
+    return event.status === 'upcoming';
+  }
+
+  // Get stats for sidebar
+  get upcomingEventsCount(): number {
+    return this.myEvents.filter(e => e.status === 'upcoming').length;
+  }
+
+  get upcomingNext7Days(): number {
+    const now = new Date();
+    const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    return this.myEvents.filter(e => {
+      if (e.status !== 'upcoming') return false;
+      const eventDate = new Date(e.date);
+      return eventDate >= now && eventDate <= next7Days;
+    }).length;
+  }
+
+  get pendingInvitations(): number {
+    return this.invitedEvents.filter(e =>
+      !e.attendanceStatus || e.attendanceStatus === 'maybe'
+    ).length;
   }
 }

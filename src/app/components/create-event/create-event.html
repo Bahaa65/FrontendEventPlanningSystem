@@ -1,0 +1,204 @@
+<div class="create-event-container">
+    <div class="create-event-wrapper">
+        <!-- Header -->
+        <header class="create-event-header">
+            <button class="back-button" (click)="cancel()">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                Back to Dashboard
+            </button>
+            <h1>Create New Event</h1>
+            <p class="subtitle">Fill in the details below to create your event</p>
+        </header>
+
+        <!-- Success Message -->
+        <div *ngIf="successMessage" class="success-banner">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                    d="M10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2ZM13.7071 8.70711L9.70711 12.7071C9.31658 13.0976 8.68342 13.0976 8.29289 12.7071L6.29289 10.7071C5.90237 10.3166 5.90237 9.68342 6.29289 9.29289C6.68342 8.90237 7.31658 8.90237 7.70711 9.29289L9 10.5858L12.2929 7.29289C12.6834 6.90237 13.3166 6.90237 13.7071 7.29289C14.0976 7.68342 14.0976 8.31658 13.7071 8.70711Z" />
+            </svg>
+            <span>{{ successMessage }}</span>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="error-banner">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                    d="M10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2ZM9 5H11V11H9V5ZM10 15C9.44772 15 9 14.5523 9 14C9 13.4477 9.44772 13 10 13C10.5523 13 11 13.4477 11 14C11 14.5523 10.5523 15 10 15Z" />
+            </svg>
+            <span>{{ error }}</span>
+        </div>
+
+        <!-- Event Form -->
+        <form [formGroup]="eventForm" (ngSubmit)="onSubmit()" class="event-form">
+            <div class="form-card card">
+                <!-- Event Title -->
+                <div class="form-group">
+                    <label for="title" class="form-label">
+                        Event Title <span class="required">*</span>
+                    </label>
+                    <input type="text" id="title" class="form-input"
+                        [class.error]="hasError('title', 'required') || hasError('title', 'maxlength')"
+                        formControlName="title" placeholder="Enter event title" maxlength="100">
+                    <span *ngIf="hasError('title', 'required')" class="form-error">
+                        Event title is required
+                    </span>
+                    <span *ngIf="hasError('title', 'maxlength')" class="form-error">
+                        Title must be less than 100 characters
+                    </span>
+                    <span *ngIf="!title?.hasError('required') && !title?.hasError('maxlength')" class="form-hint">
+                        {{ title?.value?.length || 0 }}/100 characters
+                    </span>
+                </div>
+
+                <!-- Date and Time Row -->
+                <div class="form-row">
+                    <!-- Date -->
+                    <div class="form-group">
+                        <label for="date" class="form-label">
+                            Date <span class="required">*</span>
+                        </label>
+                        <input type="date" id="date" class="form-input"
+                            [class.error]="hasError('date', 'required') || hasError('date', 'pastDate')"
+                            formControlName="date" (change)="validateDate()">
+                        <span *ngIf="hasError('date', 'required')" class="form-error">
+                            Date is required
+                        </span>
+                        <span *ngIf="hasError('date', 'pastDate')" class="form-error">
+                            Date cannot be in the past
+                        </span>
+                    </div>
+
+                    <!-- Time -->
+                    <div class="form-group">
+                        <label for="time" class="form-label">
+                            Time <span class="required">*</span>
+                        </label>
+                        <input type="time" id="time" class="form-input" [class.error]="hasError('time', 'required')"
+                            formControlName="time">
+                        <span *ngIf="hasError('time', 'required')" class="form-error">
+                            Time is required
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="form-group">
+                    <label for="location" class="form-label">
+                        Location <span class="optional">(optional)</span>
+                    </label>
+                    <input type="text" id="location" class="form-input"
+                        [class.error]="hasError('location', 'maxlength')" formControlName="location"
+                        placeholder="Enter event location" maxlength="200">
+                    <span *ngIf="hasError('location', 'maxlength')" class="form-error">
+                        Location must be less than 200 characters
+                    </span>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="description" class="form-label">
+                        Description <span class="optional">(optional)</span>
+                    </label>
+                    <textarea id="description" class="form-textarea"
+                        [class.error]="hasError('description', 'maxlength')" formControlName="description"
+                        placeholder="Enter event description" rows="5" maxlength="1000"></textarea>
+                    <span *ngIf="hasError('description', 'maxlength')" class="form-error">
+                        Description must be less than 1000 characters
+                    </span>
+                    <span *ngIf="!description?.hasError('maxlength')" class="form-hint">
+                        {{ description?.value?.length || 0 }}/1000 characters
+                    </span>
+                </div>
+
+                <!-- Invite Attendees -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Invite Attendees <span class="optional">(optional)</span>
+                    </label>
+
+                    <div class="invitee-input-group">
+                        <input type="email" class="form-input" [class.error]="!!inviteeError" [(ngModel)]="inviteeEmail"
+                            [ngModelOptions]="{standalone: true}" placeholder="Enter email address"
+                            (keyup.enter)="addInvitee()">
+                        <button type="button" class="btn btn-primary" (click)="addInvitee()">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" />
+                            </svg>
+                            Add
+                        </button>
+                    </div>
+
+                    <span *ngIf="inviteeError" class="form-error">
+                        {{ inviteeError }}
+                    </span>
+
+                    <!-- Invitees List -->
+                    <div *ngIf="invitees.length > 0" class="invitees-list">
+                        <div class="invitees-header">
+                            <span class="invitees-count">{{ invitees.length }} invitee(s) added</span>
+                        </div>
+                        <div class="invitee-chips">
+                            <div *ngFor="let email of invitees" class="invitee-chip">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                                    <path
+                                        d="M7 0C3.13401 0 0 3.13401 0 7C0 10.866 3.13401 14 7 14C10.866 14 14 10.866 14 7C14 3.13401 10.866 0 7 0ZM7 3C8.105 3 9 3.895 9 5C9 6.105 8.105 7 7 7C5.895 7 5 6.105 5 5C5 3.895 5.895 3 7 3ZM7 12C5.5 12 4.165 11.26 3.355 10.145C3.38 8.995 5.5 8.35 7 8.35C8.5 8.35 10.62 8.995 10.645 10.145C9.835 11.26 8.5 12 7 12Z" />
+                                </svg>
+                                <span>{{ email }}</span>
+                                <button type="button" class="remove-invitee" (click)="removeInvitee(email)">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                                        <path d="M3 3L9 9M3 9L9 3" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isSubmitting">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg" [disabled]="isSubmitting">
+                        <span *ngIf="!isSubmitting">Create Event</span>
+                        <span *ngIf="isSubmitting" class="loading-text">
+                            <div class="spinner spinner-sm"></div>
+                            Creating...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div *ngIf="showConfirmDialog" class="modal-overlay" (click)="cancelConfirm()">
+        <div class="modal-dialog" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Confirm Event Creation</h3>
+                <button class="modal-close" (click)="cancelConfirm()">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M6 6L14 14M6 14L14 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to create an event and send invitations to <strong>{{ invitees.length }}</strong>
+                    user(s):</p>
+                <ul class="invitees-confirm-list">
+                    <li *ngFor="let email of invitees">{{ email }}</li>
+                </ul>
+                <p class="info-text">Invitations will be sent after the event is created.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="cancelConfirm()">Cancel</button>
+                <button class="btn btn-primary" (click)="confirmSubmit()">Confirm & Create</button>
+            </div>
+        </div>
+    </div>
+</div>

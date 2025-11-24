@@ -1,30 +1,260 @@
 <div class="dashboard-container">
-  <div *ngIf="isLoading" class="loading-spinner">
-    Loading...
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner spinner-lg"></div>
+    <p>Loading dashboard...</p>
   </div>
 
-  <div *ngIf="!isLoading && currentUser" class="dashboard-content">
-    <div class="dashboard-header">
-      <h1>Dashboard</h1>
-      <button class="btn btn-logout" (click)="logout()">Logout</button>
+  <!-- Main Dashboard Content -->
+  <div *ngIf="!isLoading && currentUser" class="dashboard-wrapper">
+    <!-- Top Navigation Bar -->
+    <header class="dashboard-topbar">
+      <div class="topbar-left">
+        <div class="brand">
+          <h1 class="brand-title">Events</h1>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <button class="btn btn-primary btn-create" (click)="goToCreateEvent()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Create Event
+        </button>
+
+        <div class="user-menu">
+          <div class="user-avatar">
+            {{ currentUser.username?.charAt(0)?.toUpperCase() }}
+          </div>
+          <span class="user-name">{{ currentUser.username }}</span>
+          <button class="btn btn-sm btn-secondary" (click)="logout()">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="dashboard-main">
+      <!-- Sidebar with Stats -->
+      <aside class="dashboard-sidebar">
+        <div class="stats-card card">
+          <h3>Quick Stats</h3>
+          <div class="stats-list">
+            <div class="stat-item">
+              <div class="stat-icon" style="background-color: rgba(100, 141, 229, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="var(--primary-color)">
+                  <path
+                    d="M6 2C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V18C4 18.5304 4.21071 19.0391 4.58579 19.4142C4.96086 19.7893 5.46957 20 6 20H14C14.5304 20 15.0391 19.7893 15.4142 19.4142C15.7893 19.0391 16 18.5304 16 18V4C16 3.46957 15.7893 2.96086 15.4142 2.58579C15.0391 2.21071 14.5304 2 14 2H6ZM7 7H13V9H7V7ZM7 11H13V13H7V11Z" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">My Events</div>
+                <div class="stat-value">{{ myEvents.length }}</div>
+              </div>
+            </div>
+
+            <div class="stat-item">
+              <div class="stat-icon" style="background-color: rgba(76, 175, 80, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="var(--success-color)">
+                  <path
+                    d="M10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2ZM10 6C10.5523 6 11 6.44772 11 7V10C11 10.5523 10.5523 11 10 11C9.44772 11 9 10.5523 9 10V7C9 6.44772 9.44772 6 10 6ZM10 14C9.44772 14 9 13.5523 9 13C9 12.4477 9.44772 12 10 12C10.5523 12 11 12.4477 11 13C11 13.5523 10.5523 14 10 14Z" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Upcoming</div>
+                <div class="stat-value">{{ upcomingEventsCount }}</div>
+              </div>
+            </div>
+
+            <div class="stat-item">
+              <div class="stat-icon" style="background-color: rgba(255, 152, 0, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="var(--warning-color)">
+                  <path
+                    d="M10 18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10C18 14.4183 14.4183 18 10 18ZM9 5V11H11V5H9ZM9 13V15H11V13H9Z" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Next 7 Days</div>
+                <div class="stat-value">{{ upcomingNext7Days }}</div>
+              </div>
+            </div>
+
+            <div class="stat-item">
+              <div class="stat-icon" style="background-color: rgba(33, 150, 243, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="var(--info-color)">
+                  <path d="M10 2L2 7L10 12L18 7L10 2Z" />
+                  <path d="M2 12L10 17L18 12" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Pending Invites</div>
+                <div class="stat-value">{{ pendingInvitations }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Events Section -->
+      <section class="events-section">
+        <!-- Tabs -->
+        <div class="tabs-container">
+          <button class="tab-button" [class.active]="activeTab === 'my-events'" (click)="switchTab('my-events')">
+            My Events
+          </button>
+          <button class="tab-button" [class.active]="activeTab === 'invited-events'"
+            (click)="switchTab('invited-events')">
+            Invited Events
+          </button>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="search-filter-bar">
+          <div class="search-box">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2" />
+              <path d="M14 14L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <input type="text" class="search-input" placeholder="Search events..." [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchChange()">
+          </div>
+
+          <div class="filter-buttons">
+            <button class="filter-btn" [class.active]="activeFilter === 'all'" (click)="setFilter('all')">
+              All
+            </button>
+            <button class="filter-btn" [class.active]="activeFilter === 'upcoming'" (click)="setFilter('upcoming')">
+              Upcoming
+            </button>
+            <button class="filter-btn" [class.active]="activeFilter === 'past'" (click)="setFilter('past')">
+              Past
+            </button>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error" class="error-banner">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              d="M10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2ZM9 5H11V11H9V5ZM10 15C9.44772 15 9 14.5523 9 14C9 13.4477 9.44772 13 10 13C10.5523 13 11 13.4477 11 14C11 14.5523 10.5523 15 10 15Z" />
+          </svg>
+          <span>{{ error }}</span>
+          <button class="btn btn-sm btn-outline" (click)="retryLoad()">Retry</button>
+        </div>
+
+        <!-- Loading Events -->
+        <div *ngIf="isLoadingEvents" class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading events...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoadingEvents && displayedEvents.length === 0 && !error" class="empty-state">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <circle cx="40" cy="40" r="38" stroke="var(--border-lighter)" stroke-width="4" />
+            <path d="M40 25V55M25 40H55" stroke="var(--primary-color)" stroke-width="4" stroke-linecap="round" />
+          </svg>
+          <h3>No events found</h3>
+          <p *ngIf="activeTab === 'my-events'">Create your first event to get started!</p>
+          <p *ngIf="activeTab === 'invited-events'">You haven't been invited to any events yet.</p>
+          <button *ngIf="activeTab === 'my-events'" class="btn btn-primary" (click)="goToCreateEvent()">
+            Create Event
+          </button>
+        </div>
+
+        <!-- Events Grid -->
+        <div *ngIf="!isLoadingEvents && displayedEvents.length > 0" class="events-grid">
+          <div *ngFor="let event of displayedEvents" class="event-card card">
+            <!-- Event Header -->
+            <div class="event-header">
+              <h3 class="event-title" (click)="viewEvent(event)">
+                {{ event.title }}
+              </h3>
+              <div class="event-badges">
+                <span class="badge" [class.badge-primary]="event.role === 'organizer'"
+                  [class.badge-secondary]="event.role === 'attendee'">
+                  {{ event.role === 'organizer' ? 'Organizer' : 'Attendee' }}
+                </span>
+                <span class="badge" [class.badge-success]="event.status === 'upcoming'"
+                  [class.badge-warning]="event.status === 'past'">
+                  {{ event.status === 'upcoming' ? 'Upcoming' : 'Past' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Event Body -->
+            <div class="event-body">
+              <div class="event-detail">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path
+                    d="M5 2V4H11V2H13V4H14C14.5523 4 15 4.44772 15 5V14C15 14.5523 14.5523 15 14 15H2C1.44772 15 1 14.5523 1 14V5C1 4.44772 1.44772 4 2 4H3V2H5ZM13 7H3V13H13V7Z" />
+                </svg>
+                <span>{{ formatDate(event.date) }} — {{ event.time }}</span>
+              </div>
+
+              <div *ngIf="event.location" class="event-detail">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path
+                    d="M8 2C5.79086 2 4 3.79086 4 6C4 9 8 14 8 14C8 14 12 9 12 6C12 3.79086 10.2091 2 8 2ZM8 7.5C7.17157 7.5 6.5 6.82843 6.5 6C6.5 5.17157 7.17157 4.5 8 4.5C8.82843 4.5 9.5 5.17157 9.5 6C9.5 6.82843 8.82843 7.5 8 7.5Z" />
+                </svg>
+                <span>{{ event.location }}</span>
+              </div>
+
+              <p *ngIf="event.description" class="event-description">
+                {{ event.description }}
+              </p>
+
+              <!-- Attendance Status for Invited Events -->
+              <div *ngIf="event.role === 'attendee' && event.attendanceStatus" class="attendance-status">
+                <span class="status-label">Your Status:</span>
+                <span class="badge" [class.badge-success]="event.attendanceStatus === 'going'"
+                  [class.badge-warning]="event.attendanceStatus === 'maybe'"
+                  [class.badge-danger]="event.attendanceStatus === 'not_going'">
+                  {{ event.attendanceStatus === 'going' ? 'Going' :
+                  event.attendanceStatus === 'maybe' ? 'Maybe' : 'Not Going' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Event Footer -->
+            <div class="event-footer">
+              <button class="btn btn-sm btn-outline" (click)="viewEvent(event)">
+                View Details
+              </button>
+
+              <button *ngIf="event.role === 'organizer'" class="btn btn-sm btn-danger" (click)="confirmDelete(event)">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                  <path
+                    d="M5 2V3H2V5H3V12C3 12.5523 3.44772 13 4 13H10C10.5523 13 11 12.5523 11 12V5H12V3H9V2H5ZM5 5H6V11H5V5ZM8 5H9V11H8V5Z" />
+                </svg>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-    
-    <div class="welcome-card">
-      <h2>Welcome, {{currentUser.username}}!</h2>
-      <p>You have successfully logged in to your account.</p>
-    </div>
-    
-    <div class="info-card">
-      <h3>Your Profile Information</h3>
-      <div class="user-info">
-        <p><strong>Username:</strong> {{currentUser.username}}</p>
-        <p><strong>Email:</strong> {{currentUser.email}}</p>
+  </div>
+
+  <!-- Delete Confirmation Dialog -->
+  <div *ngIf="showDeleteDialog" class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Confirm Delete</h3>
+        <button class="modal-close" (click)="cancelDelete()">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M6 6L14 14M6 14L14 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete "{{ eventToDelete?.title }}"?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn-danger" (click)="deleteEvent()">Delete Event</button>
       </div>
     </div>
-  </div>
-
-  <div *ngIf="!isLoading && !currentUser" class="error-message">
-    <p>Please log in to access the dashboard.</p>
-    <button class="btn btn-primary" (click)="goToLogin()">Go to Login</button>
   </div>
 </div>

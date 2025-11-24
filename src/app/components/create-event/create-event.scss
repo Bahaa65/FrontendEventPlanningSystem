@@ -1,0 +1,407 @@
+.create-event-container {
+    min-height: 100vh;
+    background-color: var(--light-bg);
+    padding: var(--spacing-xl);
+}
+
+.create-event-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.create-event-header {
+    margin-bottom: var(--spacing-xl);
+
+    h1 {
+        margin-top: var(--spacing-md);
+        margin-bottom: var(--spacing-sm);
+        color: var(--dark-color);
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        margin: 0;
+    }
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: var(--spacing-sm) 0;
+    transition: all var(--transition-fast);
+
+    &:hover {
+        gap: var(--spacing-md);
+        color: #4a73c9;
+    }
+
+    svg {
+        flex-shrink: 0;
+    }
+}
+
+/* ============================================
+   Banners
+   ============================================ */
+.success-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: rgba(76, 175, 80, 0.1);
+    border: 2px solid var(--success-color);
+    border-radius: var(--radius-md);
+    color: var(--success-color);
+    margin-bottom: var(--spacing-lg);
+    animation: slideIn 0.3s ease;
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    span {
+        flex: 1;
+        font-weight: 500;
+    }
+}
+
+.error-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: rgba(244, 67, 54, 0.1);
+    border: 2px solid var(--error-color);
+    border-radius: var(--radius-md);
+    color: var(--error-color);
+    margin-bottom: var(--spacing-lg);
+    animation: slideIn 0.3s ease;
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    span {
+        flex: 1;
+        font-weight: 500;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   Form Card
+   ============================================ */
+.event-form {
+    .form-card {
+        background-color: white;
+        padding: var(--spacing-xl);
+    }
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.required {
+    color: var(--error-color);
+}
+
+.optional {
+    color: var(--text-light);
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+/* ============================================
+   Invitees Section
+   ============================================ */
+.invitee-input-group {
+    display: flex;
+    gap: var(--spacing-sm);
+
+    .form-input {
+        flex: 1;
+    }
+}
+
+.invitees-list {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: var(--light-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-lighter);
+}
+
+.invitees-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.invitees-count {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.invitee-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.invitee-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 6px 12px;
+    background-color: white;
+    border: 1px solid var(--border-lighter);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: all var(--transition-normal);
+
+    &:hover {
+        border-color: var(--primary-color);
+        box-shadow: var(--shadow-sm);
+    }
+
+    svg {
+        flex-shrink: 0;
+        color: var(--primary-color);
+    }
+
+    span {
+        flex: 1;
+    }
+}
+
+.remove-invitee {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all var(--transition-fast);
+
+    &:hover {
+        background-color: var(--error-color);
+        color: white;
+    }
+}
+
+/* ============================================
+   Form Actions
+   ============================================ */
+.form-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--border-lighter);
+}
+
+.loading-text {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* ============================================
+   Modal Dialog
+   ============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--spacing-lg);
+}
+
+.modal-dialog {
+    background-color: white;
+    border-radius: var(--radius-lg);
+    max-width: 500px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-lighter);
+
+    h3 {
+        margin: 0;
+        color: var(--dark-color);
+    }
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+
+    &:hover {
+        color: var(--dark-color);
+    }
+}
+
+.modal-body {
+    padding: var(--spacing-lg);
+
+    p {
+        margin-bottom: var(--spacing-md);
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+    }
+
+    .info-text {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        font-style: italic;
+    }
+}
+
+.invitees-confirm-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin: var(--spacing-md) 0;
+    padding-left: var(--spacing-lg);
+
+    li {
+        padding: var(--spacing-xs) 0;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+}
+
+.modal-footer {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-lighter);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 768px) {
+    .create-event-container {
+        padding: var(--spacing-md);
+    }
+
+    .create-event-header {
+        h1 {
+            font-size: 1.5rem;
+        }
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .event-form .form-card {
+        padding: var(--spacing-lg);
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+
+        button {
+            width: 100%;
+        }
+    }
+
+    .invitee-input-group {
+        flex-direction: column;
+
+        .form-input {
+            width: 100%;
+        }
+
+        button {
+            width: 100%;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .create-event-header {
+        h1 {
+            font-size: 1.25rem;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+        }
+    }
+
+    .modal-dialog {
+        margin: var(--spacing-sm);
+    }
+}
