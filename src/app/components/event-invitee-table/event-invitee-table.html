@@ -1,0 +1,70 @@
+<div class="invitee-table-section">
+    <h3 class="section-title">Manage Invitees</h3>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+    </div>
+
+    <!-- Add Invitee Form -->
+    <div class="add-invitee-form">
+        <input type="email" [(ngModel)]="newInviteeEmail" placeholder="Enter email address" class="email-input"
+            [disabled]="isAdding" (keyup.enter)="addInvitee()">
+
+        <button class="btn-add" (click)="addInvitee()" [disabled]="isAdding || !newInviteeEmail.trim()">
+            <span *ngIf="!isAdding">+ Add Invitee</span>
+            <span *ngIf="isAdding">Adding...</span>
+        </button>
+    </div>
+
+    <!-- Invitees Table -->
+    <div class="table-container" *ngIf="invitees.length > 0">
+        <table class="invitees-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th class="actions-column">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let invitee of invitees">
+                    <td class="email-cell">{{ invitee.email }}</td>
+                    <td class="status-cell">
+                        <span class="status-badge" [ngClass]="getStatusClass(invitee.status)">
+                            {{ invitee.status }}
+                        </span>
+                    </td>
+                    <td class="actions-cell">
+                        <button class="btn-remove" (click)="confirmRemoveInvitee(invitee.email)" [disabled]="isRemoving"
+                            title="Remove invitee">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="invitees.length === 0" class="empty-state">
+        <p>No invitees yet. Add someone to get started!</p>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div *ngIf="showConfirmDelete" class="modal-overlay" (click)="cancelDelete()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <h3>Remove Invitee</h3>
+            <p>Are you sure you want to remove <strong>{{ inviteeToDelete }}</strong> from the invitee list?</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" (click)="cancelDelete()" [disabled]="isRemoving">
+                    Cancel
+                </button>
+                <button class="btn-confirm-delete" (click)="removeInvitee()" [disabled]="isRemoving">
+                    <span *ngIf="!isRemoving">Remove</span>
+                    <span *ngIf="isRemoving">Removing...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

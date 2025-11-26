@@ -1,0 +1,329 @@
+.invitee-table-section {
+    background-color: #EEE5E5;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    color: #231942;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 1.25rem 0;
+}
+
+/* Error Message */
+.error-message {
+    background-color: #FEE;
+    color: #D32F2F;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    border-left: 3px solid #F44336;
+}
+
+/* Add Invitee Form */
+.add-invitee-form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.email-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid #DDD;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.email-input:focus {
+    outline: none;
+    border-color: #648DE5;
+    box-shadow: 0 0 0 3px rgba(100, 141, 229, 0.1);
+}
+
+.email-input:disabled {
+    background-color: #F5F5F5;
+    cursor: not-allowed;
+}
+
+.btn-add {
+    padding: 0.75rem 1.5rem;
+    background-color: #648DE5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(100, 141, 229, 0.2);
+}
+
+.btn-add:hover:not(:disabled) {
+    background-color: #5077d1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(100, 141, 229, 0.3);
+}
+
+.btn-add:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Table Container */
+.table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.invitees-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invitees-table thead {
+    background-color: #231942;
+    color: white;
+}
+
+.invitees-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.invitees-table tbody tr {
+    border-bottom: 1px solid #EEE;
+    transition: background-color 0.2s ease;
+}
+
+.invitees-table tbody tr:hover {
+    background-color: #F9F9F9;
+}
+
+.invitees-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.invitees-table td {
+    padding: 1rem;
+    font-size: 0.95rem;
+}
+
+.email-cell {
+    color: #100505;
+    font-weight: 500;
+}
+
+.status-cell {
+    text-align: left;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-invited {
+    background-color: #E3F2FD;
+    color: #648DE5;
+}
+
+.status-accepted {
+    background-color: #E8F5E9;
+    color: #4CAF50;
+}
+
+.status-declined {
+    background-color: #FFEBEE;
+    color: #F44336;
+}
+
+.actions-column {
+    width: 100px;
+    text-align: center;
+}
+
+.actions-cell {
+    text-align: center;
+}
+
+.btn-remove {
+    background-color: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-remove:hover:not(:disabled) {
+    background-color: #FFEBEE;
+    transform: scale(1.1);
+}
+
+.btn-remove:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #999;
+    font-style: italic;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-content h3 {
+    color: #231942;
+    margin: 0 0 1rem 0;
+    font-size: 1.4rem;
+}
+
+.modal-content p {
+    color: #666;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.6;
+}
+
+.modal-content p strong {
+    color: #231942;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.btn-cancel,
+.btn-confirm-delete {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background-color: #EEE5E5;
+    color: #231942;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background-color: #DDD;
+}
+
+.btn-confirm-delete {
+    background-color: #F44336;
+    color: white;
+}
+
+.btn-confirm-delete:hover:not(:disabled) {
+    background-color: #D32F2F;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.btn-cancel:disabled,
+.btn-confirm-delete:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .add-invitee-form {
+        flex-direction: column;
+    }
+
+    .btn-add {
+        width: 100%;
+    }
+
+    .invitees-table th,
+    .invitees-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.7rem;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions button {
+        width: 100%;
+    }
+}

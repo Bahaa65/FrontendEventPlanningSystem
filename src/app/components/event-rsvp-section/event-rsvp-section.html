@@ -1,0 +1,36 @@
+<div class="rsvp-section">
+    <h3 class="rsvp-title">Your RSVP</h3>
+
+    <p class="rsvp-subtitle">Will you be attending this event?</p>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+    </div>
+
+    <!-- RSVP Buttons -->
+    <div class="rsvp-buttons">
+        <button class="rsvp-btn going" [class.selected]="isSelected('going')" [disabled]="isUpdating"
+            (click)="updateStatus('going')">
+            <span class="btn-icon">✓</span>
+            <span class="btn-label">Going</span>
+        </button>
+
+        <button class="rsvp-btn maybe" [class.selected]="isSelected('maybe')" [disabled]="isUpdating"
+            (click)="updateStatus('maybe')">
+            <span class="btn-icon">?</span>
+            <span class="btn-label">Maybe</span>
+        </button>
+
+        <button class="rsvp-btn not-going" [class.selected]="isSelected('not_going')" [disabled]="isUpdating"
+            (click)="updateStatus('not_going')">
+            <span class="btn-icon">✗</span>
+            <span class="btn-label">Not Going</span>
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isUpdating" class="updating-message">
+        Updating your RSVP...
+    </div>
+</div>

@@ -172,4 +172,75 @@ export class EventService {
             })
         );
     }
+
+    /**
+     * Update attendance (alias for updateAttendanceStatus to match specification)
+     * @param id Event ID
+     * @param status Attendance status
+     */
+    updateAttendance(
+        id: string,
+        status: 'going' | 'maybe' | 'not_going'
+    ): Observable<{ success: boolean }> {
+        return this.updateAttendanceStatus(id, status);
+    }
+
+    /**
+     * Add an invitee to an event (organizer only)
+     * @param eventId Event ID
+     * @param email Invitee email
+     */
+    addInvitee(
+        eventId: string,
+        email: string
+    ): Observable<{ success: boolean }> {
+        const currentUser = this.getCurrentUsername();
+
+        // Use local storage if enabled
+        if (environment.useLocalStorage) {
+            return this.localStorageService.addInvitee(eventId, email, currentUser);
+        }
+
+        // Otherwise use backend API
+        return this.http.post<{ success: boolean }>(
+            `${this.baseUrl}/api/events/${eventId}/invitees`,
+            { email },
+            { headers: this.getHeaders() }
+        ).pipe(
+            catchError(error => {
+                // Fallback to local storage on error
+                console.warn('Backend addInvitee failed, falling back to local storage');
+                return this.localStorageService.addInvitee(eventId, email, currentUser);
+            })
+        );
+    }
+
+    /**
+     * Remove an invitee from an event (organizer only)
+     * @param eventId Event ID
+     * @param email Invitee email
+     */
+    removeInvitee(
+        eventId: string,
+        email: string
+    ): Observable<{ success: boolean }> {
+        const currentUser = this.getCurrentUsername();
+
+        // Use local storage if enabled
+        if (environment.useLocalStorage) {
+            return this.localStorageService.removeInvitee(eventId, email, currentUser);
+        }
+
+        // Otherwise use backend API
+        return this.http.delete<{ success: boolean }>(
+            `${this.baseUrl}/api/events/${eventId}/invitees/${encodeURIComponent(email)}`,
+            { headers: this.getHeaders() }
+        ).pipe(
+            catchError(error => {
+                // Fallback to local storage on error
+                console.warn('Backend removeInvitee failed, falling back to local storage');
+                return this.localStorageService.removeInvitee(eventId, email, currentUser);
+            })
+        );
+    }
 }

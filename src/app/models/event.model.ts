@@ -3,8 +3,8 @@ export interface Event {
   title: string;
   date: string;
   time: string;
-  location?: string;
-  description?: string;
+  location: string;
+  description: string;
   organizerId: string;
   role: 'organizer' | 'attendee';
   status: 'upcoming' | 'past';

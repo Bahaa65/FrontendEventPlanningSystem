@@ -59,18 +59,6 @@ export class LocalStorageService {
             },
             {
                 id: this.generateId(),
-                title: 'Annual Company Retreat',
-                date: this.getFutureDate(30),
-                time: '09:00',
-                location: 'Mountain Resort, Lake Tahoe',
-                description: 'Three-day company retreat with team activities and relaxation',
-                organizerId: 'hr_manager',
-                role: 'attendee',
-                status: 'upcoming',
-                attendanceStatus: 'going'
-            },
-            {
-                id: this.generateId(),
                 title: 'Client Presentation',
                 date: this.getPastDate(5),
                 time: '15:00',
@@ -223,8 +211,8 @@ export class LocalStorageService {
             title: eventData.title,
             date: eventData.date,
             time: eventData.time,
-            location: eventData.location,
-            description: eventData.description,
+            location: eventData.location || '',
+            description: eventData.description || '',
             organizerId: currentUser,
             role: 'organizer',
             status: this.getEventStatus(eventData.date),
@@ -281,6 +269,82 @@ export class LocalStorageService {
 
         // Update attendance status
         event.attendanceStatus = status;
+        this.saveEvents(events);
+
+        // Simulate API delay
+        return of({ success: true }).pipe(delay(300));
+    }
+
+    /**
+     * Add invitee to an event
+     */
+    addInvitee(
+        eventId: string,
+        email: string,
+        currentUser: string
+    ): Observable<{ success: boolean }> {
+        const events = this.getStoredEvents();
+        const event = events.find(e => e.id === eventId);
+
+        if (!event) {
+            throw new Error('Event not found');
+        }
+
+        // Only allow organizer to add invitees
+        if (event.organizerId !== currentUser) {
+            throw new Error('Only the organizer can add invitees');
+        }
+
+        // Check if invitee already exists
+        if (event.invitees?.some(inv => inv.email === email)) {
+            throw new Error('Invitee already exists');
+        }
+
+        // Initialize invitees array if needed
+        if (!event.invitees) {
+            event.invitees = [];
+        }
+
+        // Add new invitee
+        event.invitees.push({
+            email: email,
+            status: 'invited'
+        });
+
+        this.saveEvents(events);
+
+        // Simulate API delay
+        return of({ success: true }).pipe(delay(300));
+    }
+
+    /**
+     * Remove invitee from an event
+     */
+    removeInvitee(
+        eventId: string,
+        email: string,
+        currentUser: string
+    ): Observable<{ success: boolean }> {
+        const events = this.getStoredEvents();
+        const event = events.find(e => e.id === eventId);
+
+        if (!event) {
+            throw new Error('Event not found');
+        }
+
+        // Only allow organizer to remove invitees
+        if (event.organizerId !== currentUser) {
+            throw new Error('Only the organizer can remove invitees');
+        }
+
+        // Remove invitee
+        if (event.invitees) {
+            const inviteeIndex = event.invitees.findIndex(inv => inv.email === email);
+            if (inviteeIndex !== -1) {
+                event.invitees.splice(inviteeIndex, 1);
+            }
+        }
+
         this.saveEvents(events);
 
         // Simulate API delay

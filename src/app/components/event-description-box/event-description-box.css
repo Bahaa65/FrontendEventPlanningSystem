@@ -1,0 +1,44 @@
+.description-box {
+    background-color: #EEE5E5;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.description-title {
+    color: #231942;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
+
+.description-text {
+    color: #100505;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.description-empty {
+    color: #999;
+    font-style: italic;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .description-box {
+        padding: 1.25rem;
+    }
+
+    .description-title {
+        font-size: 1.2rem;
+    }
+
+    .description-text {
+        font-size: 0.95rem;
+    }
+}

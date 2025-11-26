@@ -1,0 +1,151 @@
+.rsvp-section {
+    background-color: #EEE5E5;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.rsvp-title {
+    color: #231942;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.rsvp-subtitle {
+    color: #666;
+    font-size: 0.95rem;
+    margin: 0 0 1.25rem 0;
+}
+
+/* Error Message */
+.error-message {
+    background-color: #FEE;
+    color: #D32F2F;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    border-left: 3px solid #F44336;
+}
+
+/* RSVP Buttons */
+.rsvp-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.rsvp-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    background-color: white;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.rsvp-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.rsvp-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.rsvp-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.btn-label {
+    font-size: 0.95rem;
+}
+
+/* Going Button */
+.rsvp-btn.going {
+    border-color: #4CAF50;
+}
+
+.rsvp-btn.going .btn-icon {
+    color: #4CAF50;
+}
+
+.rsvp-btn.going.selected {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.rsvp-btn.going.selected .btn-icon {
+    color: white;
+}
+
+/* Maybe Button */
+.rsvp-btn.maybe {
+    border-color: #FFC107;
+}
+
+.rsvp-btn.maybe .btn-icon {
+    color: #FFC107;
+}
+
+.rsvp-btn.maybe.selected {
+    background-color: #FFC107;
+    color: white;
+}
+
+.rsvp-btn.maybe.selected .btn-icon {
+    color: white;
+}
+
+/* Not Going Button */
+.rsvp-btn.not-going {
+    border-color: #F44336;
+}
+
+.rsvp-btn.not-going .btn-icon {
+    color: #F44336;
+}
+
+.rsvp-btn.not-going.selected {
+    background-color: #F44336;
+    color: white;
+}
+
+.rsvp-btn.not-going.selected .btn-icon {
+    color: white;
+}
+
+/* Updating Message */
+.updating-message {
+    text-align: center;
+    color: #648DE5;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .rsvp-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .rsvp-btn {
+        padding: 1rem;
+    }
+}
