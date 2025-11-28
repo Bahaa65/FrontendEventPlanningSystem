@@ -9,6 +9,14 @@ import {
     CreateEventRequest,
     CreateEventResponse
 } from '../models/event.model';
+import {
+    Task,
+    TasksResponse,
+    CreateTaskRequest,
+    CreateTaskResponse,
+    SearchFilterParams,
+    SearchResponse
+} from '../models/task.model';
 import { LocalStorageService } from './local-storage.service';
 
 @Injectable({
@@ -240,6 +248,135 @@ export class EventService {
                 // Fallback to local storage on error
                 console.warn('Backend removeInvitee failed, falling back to local storage');
                 return this.localStorageService.removeInvitee(eventId, email, currentUser);
+            })
+        );
+    }
+
+    // ==================== TASK MANAGEMENT ====================
+
+    /**
+     * Get tasks by event ID
+     * @param eventId Event ID
+     */
+    getTasksByEventId(eventId: string): Observable<TasksResponse> {
+        // Use local storage if enabled
+        if (environment.useLocalStorage) {
+            return this.localStorageService.getTasksByEventId(eventId);
+        }
+
+        // Otherwise use backend API
+        return this.http.get<TasksResponse>(
+            `${this.baseUrl}/api/events/${eventId}/tasks`,
+            { headers: this.getHeaders() }
+        ).pipe(
+            catchError(error => {
+                // Fallback to local storage on error
+                console.warn('Backend getTasksByEventId failed, falling back to local storage');
+                return this.localStorageService.getTasksByEventId(eventId);
+            })
+        );
+    }
+
+    /**
+     * Create a new task
+     * @param taskData Task data
+     */
+    createTask(taskData: CreateTaskRequest): Observable<CreateTaskResponse> {
+        const currentUser = this.getCurrentUsername();
+
+        // Use local storage if enabled
+        if (environment.useLocalStorage) {
+            return this.localStorageService.createTask(taskData, currentUser);
+        }
+
+        // Otherwise use backend API
+        return this.http.post<CreateTaskResponse>(
+            `${this.baseUrl}/api/tasks`,
+            taskData,
+            { headers: this.getHeaders() }
+        ).pipe(
+            catchError(error => {
+                // Fallback to local storage on error
+                console.warn('Backend createTask failed, falling back to local storage');
+                return this.localStorageService.createTask(taskData, currentUser);
+            })
+        );
+    }
+
+    /**
+     * Update a task
+     * @param taskId Task ID
+     * @param updates Task updates
+     */
+    updateTask(taskId: string, updates: Partial<Task>): Observable<{ success: boolean, task: Task }> {
+        // Use local storage if enabled
+        if (environment.useLocalStorage) {
+            return this.localStorageService.updateTask(taskId, updates);
+        }
+
+        // Otherwise use backend API
+        return this.http.patch<{ success: boolean, task: Task }>(
+            `${this.baseUrl}/api/tasks/${taskId}`,
+            updates,
+            { headers: this.getHeaders() }
+        ).pipe(
+            catchError(error => {
+                // Fallback to local storage on error
+                console.warn('Backend updateTask failed, falling back to local storage');
+                return this.localStorageService.updateTask(taskId, updates);
+            })
+        );
+    }
+
+    /**
+     * Delete a task
+     * @param taskId Task ID
+     */
+    deleteTask(taskId: string): Observable<{ success: boolean }> {
+        const currentUser = this.getCurrentUsername();
+
+        // Use local storage if enabled
+        if (environment.useLocalStorage) {
+            return this.localStorageService.deleteTask(taskId, currentUser);
+        }
+
+        // Otherwise use backend API
+        return this.http.delete<{ success: boolean }>(
+            `${this.baseUrl}/api/tasks/${taskId}`,
+            { headers: this.getHeaders() }
+        ).pipe(
+            catchError(error => {
+                // Fallback to local storage on error
+                console.warn('Backend deleteTask failed, falling back to local storage');
+                return this.localStorageService.deleteTask(taskId, currentUser);
+            })
+        );
+    }
+
+    // ==================== ADVANCED SEARCH ====================
+
+    /**
+     * Advanced search for events and/or tasks
+     * @param searchParams Search and filter parameters
+     */
+    advancedSearch(searchParams: SearchFilterParams): Observable<SearchResponse> {
+        const currentUser = this.getCurrentUsername();
+
+        // Use local storage if enabled
+        if (environment.useLocalStorage) {
+            return this.localStorageService.advancedSearch(searchParams, currentUser);
+        }
+
+        // Otherwise use backend API
+        return this.http.post<SearchResponse>(
+            `${this.baseUrl}/api/search`,
+            searchParams,
+            { headers: this.getHeaders() }
+        ).pipe(
+            catchError(error => {
+                // Fallback to local storage on error
+                console.warn('Backend advancedSearch failed, falling back to local storage');
+                return this.localStorageService.advancedSearch(searchParams, currentUser);
             })
         );
     }

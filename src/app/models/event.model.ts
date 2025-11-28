@@ -10,6 +10,8 @@ export interface Event {
   status: 'upcoming' | 'past';
   attendanceStatus?: 'going' | 'maybe' | 'not_going';
   invitees?: Invitee[];
+  tasks?: any[]; // Task[] - Populated when fetching event details
+  taskCount?: number; // Quick count without loading full tasks
 }
 
 export interface Invitee {
