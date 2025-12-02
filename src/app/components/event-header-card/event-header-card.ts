@@ -18,6 +18,11 @@ export class EventHeaderCardComponent {
         this.deleteEvent.emit();
     }
 
+    ngOnInit() {
+        console.log('Event Header Card - event:', this.event);
+        console.log('Event Header Card - isOrganizer:', this.isOrganizer);
+    }
+
     formatDate(dateString: string): string {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {

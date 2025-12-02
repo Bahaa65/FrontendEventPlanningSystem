@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000',
-  useLocalStorage: true  // Set to true for local testing without backend
+  apiUrl: 'http://127.0.0.1:8000',
+  useLocalStorage: false  // Set to false to use backend API
 };

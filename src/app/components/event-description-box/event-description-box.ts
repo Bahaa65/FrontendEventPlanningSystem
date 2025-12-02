@@ -10,4 +10,8 @@ import { CommonModule } from '@angular/common';
 })
 export class EventDescriptionBoxComponent {
     @Input() description: string = '';
+
+    ngOnInit() {
+        console.log('Description Box - description:', this.description);
+    }
 }

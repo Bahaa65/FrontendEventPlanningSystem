@@ -61,24 +61,33 @@ export class DashboardComponent implements OnInit {
     this.isLoadingEvents = true;
     this.error = null;
 
-    const role = this.activeTab === 'my-events' ? 'organizer' : 'attendee';
-
-    this.eventService.getEvents(role).subscribe({
-      next: (response) => {
-        if (this.activeTab === 'my-events') {
-          this.myEvents = response.events || [];
-        } else {
-          this.invitedEvents = response.events || [];
+    if (this.activeTab === 'my-events') {
+      this.eventService.getAllEvents().subscribe({
+        next: (events) => {
+          this.myEvents = events || [];
+          this.updateDisplayedEvents();
+          this.isLoadingEvents = false;
+        },
+        error: (error) => {
+          this.error = error.error || 'Failed to load events';
+          this.isLoadingEvents = false;
+          console.error('Error loading events:', error);
         }
-        this.updateDisplayedEvents();
-        this.isLoadingEvents = false;
-      },
-      error: (error) => {
-        this.error = error.error || 'Failed to load events';
-        this.isLoadingEvents = false;
-        console.error('Error loading events:', error);
-      }
-    });
+      });
+    } else {
+      this.eventService.getInvitedEvents().subscribe({
+        next: (events) => {
+          this.invitedEvents = events || [];
+          this.updateDisplayedEvents();
+          this.isLoadingEvents = false;
+        },
+        error: (error) => {
+          this.error = error.error || 'Failed to load invited events';
+          this.isLoadingEvents = false;
+          console.error('Error loading invited events:', error);
+        }
+      });
+    }
   }
 
   switchTab(tab: TabType): void {
@@ -213,7 +222,7 @@ export class DashboardComponent implements OnInit {
 
   get pendingInvitations(): number {
     return this.invitedEvents.filter(e =>
-      !e.attendanceStatus || e.attendanceStatus === 'maybe'
+      !e.attendanceStatus || e.attendanceStatus === 'Maybe'
     ).length;
   }
 }

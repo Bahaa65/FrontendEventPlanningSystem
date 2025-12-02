@@ -10,20 +10,20 @@
 
     <!-- RSVP Buttons -->
     <div class="rsvp-buttons">
-        <button class="rsvp-btn going" [class.selected]="isSelected('going')" [disabled]="isUpdating"
-            (click)="updateStatus('going')">
+        <button class="rsvp-btn going" [class.selected]="isSelected('Going')" [disabled]="isUpdating"
+            (click)="updateStatus('Going')">
             <span class="btn-icon">✓</span>
             <span class="btn-label">Going</span>
         </button>
 
-        <button class="rsvp-btn maybe" [class.selected]="isSelected('maybe')" [disabled]="isUpdating"
-            (click)="updateStatus('maybe')">
+        <button class="rsvp-btn maybe" [class.selected]="isSelected('Maybe')" [disabled]="isUpdating"
+            (click)="updateStatus('Maybe')">
             <span class="btn-icon">?</span>
             <span class="btn-label">Maybe</span>
         </button>
 
-        <button class="rsvp-btn not-going" [class.selected]="isSelected('not_going')" [disabled]="isUpdating"
-            (click)="updateStatus('not_going')">
+        <button class="rsvp-btn not-going" [class.selected]="isSelected('Not Going')" [disabled]="isUpdating"
+            (click)="updateStatus('Not Going')">
             <span class="btn-icon">✗</span>
             <span class="btn-label">Not Going</span>
         </button>

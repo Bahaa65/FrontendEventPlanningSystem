@@ -25,7 +25,7 @@
 
         <div class="user-menu">
           <div class="user-avatar">
-            {{ currentUser.username?.charAt(0)?.toUpperCase() }}
+            {{ currentUser.username.charAt(0).toUpperCase() }}
           </div>
           <span class="user-name">{{ currentUser.username }}</span>
           <button class="btn btn-sm btn-secondary" (click)="logout()">Logout</button>
@@ -207,11 +207,11 @@
               <!-- Attendance Status for Invited Events -->
               <div *ngIf="event.role === 'attendee' && event.attendanceStatus" class="attendance-status">
                 <span class="status-label">Your Status:</span>
-                <span class="badge" [class.badge-success]="event.attendanceStatus === 'going'"
-                  [class.badge-warning]="event.attendanceStatus === 'maybe'"
-                  [class.badge-danger]="event.attendanceStatus === 'not_going'">
-                  {{ event.attendanceStatus === 'going' ? 'Going' :
-                  event.attendanceStatus === 'maybe' ? 'Maybe' : 'Not Going' }}
+                <span class="badge" [class.badge-success]="event.attendanceStatus === 'Going'"
+                  [class.badge-warning]="event.attendanceStatus === 'Maybe'"
+                  [class.badge-danger]="event.attendanceStatus === 'Not Going'">
+                  {{ event.attendanceStatus === 'Going' ? 'Going' :
+                  event.attendanceStatus === 'Maybe' ? 'Maybe' : 'Not Going' }}
                 </span>
               </div>
             </div>

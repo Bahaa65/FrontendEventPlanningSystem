@@ -45,8 +45,8 @@ export class LocalStorageService {
                 role: 'organizer',
                 status: 'upcoming',
                 invitees: [
-                    { email: 'colleague1@example.com', status: 'invited' },
-                    { email: 'colleague2@example.com', status: 'invited' }
+                    { email: 'colleague1@example.com', status: 'Pending' },
+                    { email: 'colleague2@example.com', status: 'Pending' }
                 ]
             },
             {
@@ -76,7 +76,7 @@ export class LocalStorageService {
         localStorage.setItem(this.EVENTS_KEY, JSON.stringify(sampleEvents));
 
         // Seed sample tasks with event IDs
-        const eventIds = sampleEvents.map(e => e.id);
+        const eventIds = sampleEvents.map(e => String(e.id));
         this.seedSampleTasks(eventIds);
     }
 
@@ -210,14 +210,14 @@ export class LocalStorageService {
         // Convert string invitees to Invitee objects
         const invitees: Invitee[] | undefined = eventData.invitees?.map(email => ({
             email: email,
-            status: 'invited' as const
+            status: 'Pending' as const
         }));
 
         const newEvent: Event = {
             id: this.generateId(),
             title: eventData.title,
             date: eventData.date,
-            time: eventData.time,
+            time: '00:00', // Default time since CreateEventRequest doesn't include it
             location: eventData.location || '',
             description: eventData.description || '',
             organizerId: currentUser,
@@ -264,7 +264,7 @@ export class LocalStorageService {
      */
     updateAttendanceStatus(
         eventId: string,
-        status: 'going' | 'maybe' | 'not_going',
+        status: 'Going' | 'Maybe' | 'Not Going',
         currentUser: string
     ): Observable<{ success: boolean }> {
         const events = this.getStoredEvents();
@@ -315,7 +315,7 @@ export class LocalStorageService {
         // Add new invitee
         event.invitees.push({
             email: email,
-            status: 'invited'
+            status: 'Pending'
         });
 
         this.saveEvents(events);
@@ -566,7 +566,7 @@ export class LocalStorageService {
 
         // Event status filter
         if (params.eventStatus && params.eventStatus.length > 0) {
-            filtered = filtered.filter(e => params.eventStatus!.includes(e.status));
+            filtered = filtered.filter(e => e.status && params.eventStatus!.includes(e.status));
         }
 
         return filtered;

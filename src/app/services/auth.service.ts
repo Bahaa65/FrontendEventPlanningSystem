@@ -48,7 +48,7 @@ export class AuthService {
     }
 
     // Otherwise use backend API
-    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/signup/`, {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/api/auth/signup/`, {
       username: userData.username,
       email: userData.email,
       password: userData.password
@@ -107,7 +107,7 @@ export class AuthService {
     }
 
     // Otherwise use backend API
-    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login/`, userData, { headers: this.getHeaders() }).pipe(
+    return this.http.post<AuthResponse>(`${this.baseUrl}/api/auth/login/`, userData, { headers: this.getHeaders() }).pipe(
       tap(response => {
         if (response.token) {
           localStorage.setItem('token', response.token);

@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EventService } from '../../services/event.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
     selector: 'app-event-rsvp-section',
@@ -11,21 +12,28 @@ import { EventService } from '../../services/event.service';
 })
 export class EventRsvpSectionComponent {
     @Input() eventId: string = '';
-    @Input() currentStatus: 'going' | 'maybe' | 'not_going' | undefined;
+    @Input() currentStatus: 'Going' | 'Maybe' | 'Not Going' | undefined;
     @Output() statusChanged = new EventEmitter<void>();
 
     isUpdating: boolean = false;
     errorMessage: string = '';
 
-    constructor(private eventService: EventService) { }
+    constructor(
+        private eventService: EventService,
+        private authService: AuthService
+    ) { }
 
-    updateStatus(status: 'going' | 'maybe' | 'not_going'): void {
+    updateStatus(status: 'Going' | 'Maybe' | 'Not Going'): void {
         if (this.isUpdating) return;
 
         this.isUpdating = true;
         this.errorMessage = '';
 
-        this.eventService.updateAttendance(this.eventId, status).subscribe({
+        // Get current user email
+        const currentUser = this.authService.getCurrentUser();
+        const email = currentUser?.email || '';
+
+        this.eventService.updateAttendance(this.eventId, email, status).subscribe({
             next: () => {
                 this.currentStatus = status;
                 this.isUpdating = false;
@@ -39,7 +47,7 @@ export class EventRsvpSectionComponent {
         });
     }
 
-    isSelected(status: 'going' | 'maybe' | 'not_going'): boolean {
+    isSelected(status: 'Going' | 'Maybe' | 'Not Going'): boolean {
         return this.currentStatus === status;
     }
 }

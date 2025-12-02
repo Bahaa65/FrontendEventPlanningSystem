@@ -1,22 +1,16 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, throwError, of } from 'rxjs';
+import { catchError, tap, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
     Event,
     EventsResponse,
     CreateEventRequest,
-    CreateEventResponse
+    CreateEventResponse,
+    UpdateEventRequest,
+    UpdateAttendanceRequest
 } from '../models/event.model';
-import {
-    Task,
-    TasksResponse,
-    CreateTaskRequest,
-    CreateTaskResponse,
-    SearchFilterParams,
-    SearchResponse
-} from '../models/task.model';
 import { LocalStorageService } from './local-storage.service';
 
 @Injectable({
@@ -52,332 +46,330 @@ export class EventService {
         return 'demo_user';
     }
 
-    /**
-     * Get events based on role
-     * @param role 'organizer' or 'attendee'
-     */
-    getEvents(role: 'organizer' | 'attendee'): Observable<EventsResponse> {
-        const currentUser = this.getCurrentUsername();
+    private getCurrentUserEmail(): string {
+        const user = localStorage.getItem('user');
+        if (user) {
+            const parsedUser = JSON.parse(user);
+            return parsedUser.email || '';
+        }
+        return '';
+    }
 
-        // Use local storage if enabled
+    // ==================== EVENT MANAGEMENT ====================
+
+    /**
+     * Get all events created by the current user
+     * GET /api/events/
+     */
+    getAllEvents(): Observable<Event[]> {
         if (environment.useLocalStorage) {
-            return this.localStorageService.getEventsByRole(role, currentUser);
+            return this.localStorageService.getEventsByRole('organizer', this.getCurrentUsername()).pipe(
+                map(response => response.events || [])
+            );
         }
 
-        // Otherwise use backend API
-        return this.http.get<EventsResponse>(
-            `${this.baseUrl}/api/events?role=${role}`,
-            { headers: this.getHeaders() }
-        ).pipe(
+        return this.http.get<EventsResponse>(`${this.baseUrl}/api/events/`, { headers: this.getHeaders() }).pipe(
+            map(response => {
+                // Handle both 'events' and 'results' array names
+                return response.events || response.results || [];
+            }),
             catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend getEvents failed, falling back to local storage');
-                return this.localStorageService.getEventsByRole(role, currentUser);
+                console.warn('Backend getAllEvents failed, falling back to local storage', error);
+                return this.localStorageService.getEventsByRole('organizer', this.getCurrentUsername()).pipe(
+                    map(response => response.events || [])
+                );
             })
         );
     }
 
     /**
-     * Get a specific event by ID
-     * @param eventId Event ID
+     * Get events you are invited to
+     * GET /api/events/invited/
      */
-    getEventById(eventId: string): Observable<Event> {
-        // Use local storage if enabled
+    getInvitedEvents(): Observable<Event[]> {
         if (environment.useLocalStorage) {
-            return this.localStorageService.getEventById(eventId);
+            return this.localStorageService.getEventsByRole('attendee', this.getCurrentUsername()).pipe(
+                map(response => response.events || [])
+            );
         }
 
-        // Otherwise use backend API
-        return this.http.get<Event>(
-            `${this.baseUrl}/api/events/${eventId}`,
-            { headers: this.getHeaders() }
-        ).pipe(
+        return this.http.get<EventsResponse>(`${this.baseUrl}/api/events/invited/`, { headers: this.getHeaders() }).pipe(
+            map(response => response.events || response.results || []),
             catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend getEventById failed, falling back to local storage');
-                return this.localStorageService.getEventById(eventId);
+                console.warn('Backend getInvitedEvents failed, falling back to local storage', error);
+                return this.localStorageService.getEventsByRole('attendee', this.getCurrentUsername()).pipe(
+                    map(response => response.events || [])
+                );
             })
         );
     }
 
     /**
      * Create a new event
-     * @param eventData Event data
+     * POST /api/events/create/
      */
     createEvent(eventData: CreateEventRequest): Observable<CreateEventResponse> {
         const currentUser = this.getCurrentUsername();
 
-        // Use local storage if enabled
         if (environment.useLocalStorage) {
             return this.localStorageService.createEvent(eventData, currentUser);
         }
 
-        // Otherwise use backend API
-        return this.http.post<CreateEventResponse>(
-            `${this.baseUrl}/api/events`,
-            eventData,
-            { headers: this.getHeaders() }
-        ).pipe(
+        return this.http.post<any>(`${this.baseUrl}/api/events/create/`, eventData, { headers: this.getHeaders() }).pipe(
+            map(response => {
+                // Normalize response structure
+                return {
+                    success: true,
+                    event: response.event || response,
+                    id: response.id,
+                    message: response.message
+                };
+            }),
             catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend createEvent failed, falling back to local storage');
+                console.warn('Backend createEvent failed, falling back to local storage', error);
                 return this.localStorageService.createEvent(eventData, currentUser);
             })
         );
     }
 
     /**
-     * Delete an event (only for organizers)
-     * @param eventId Event ID
+     * Get a specific event by ID
+     * GET /api/events/{id}
      */
-    deleteEvent(eventId: string): Observable<{ success: boolean }> {
-        const currentUser = this.getCurrentUsername();
-
-        // Use local storage if enabled
+    getEventById(eventId: string | number): Observable<Event> {
         if (environment.useLocalStorage) {
-            return this.localStorageService.deleteEvent(eventId, currentUser);
+            return this.localStorageService.getEventById(String(eventId));
         }
 
-        // Otherwise use backend API
-        return this.http.delete<{ success: boolean }>(
-            `${this.baseUrl}/api/events/${eventId}`,
-            { headers: this.getHeaders() }
-        ).pipe(
+        return this.http.get<Event>(`${this.baseUrl}/api/events/${eventId}`, { headers: this.getHeaders() }).pipe(
             catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend deleteEvent failed, falling back to local storage');
-                return this.localStorageService.deleteEvent(eventId, currentUser);
+                console.warn('Backend getEventById failed, falling back to local storage', error);
+                return this.localStorageService.getEventById(String(eventId));
             })
         );
     }
+
+    /**
+     * Update/Edit an event
+     * PATCH /api/events/{id}/details/
+     */
+    updateEvent(eventId: string | number, updates: UpdateEventRequest): Observable<{ success: boolean, event?: Event }> {
+        if (environment.useLocalStorage) {
+            // LocalStorage service might not have this method, so we'll handle it
+            return of({ success: true });
+        }
+
+        return this.http.patch<any>(`${this.baseUrl}/api/events/${eventId}/details/`, updates, { headers: this.getHeaders() }).pipe(
+            map(response => ({
+                success: true,
+                event: response.event || response
+            })),
+            catchError(error => {
+                console.error('Backend updateEvent failed', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    /**
+     * Delete an event
+     * DELETE /api/events/{id}/delete/
+     */
+    deleteEvent(eventId: string | number): Observable<{ success: boolean, message?: string }> {
+        const currentUser = this.getCurrentUsername();
+
+        if (environment.useLocalStorage) {
+            return this.localStorageService.deleteEvent(String(eventId), currentUser);
+        }
+
+        return this.http.delete<any>(`${this.baseUrl}/api/events/${eventId}/delete/`, { headers: this.getHeaders() }).pipe(
+            map(response => ({
+                success: true,
+                message: response.message || 'Event deleted successfully'
+            })),
+            catchError(error => {
+                console.warn('Backend deleteEvent failed, falling back to local storage', error);
+                return this.localStorageService.deleteEvent(String(eventId), currentUser);
+            })
+        );
+    }
+
+    // ==================== ATTENDANCE MANAGEMENT ====================
 
     /**
      * Update attendance status for an event
-     * @param eventId Event ID
-     * @param status Attendance status
+     * PATCH /api/events/{id}/attendance/
+     * Body: { email: string, status: 'Going' | 'Maybe' | 'Not Going' }
      */
-    updateAttendanceStatus(
-        eventId: string,
-        status: 'going' | 'maybe' | 'not_going'
-    ): Observable<{ success: boolean }> {
+    updateAttendance(eventId: string | number, email: string, status: 'Going' | 'Maybe' | 'Not Going'): Observable<{ success: boolean }> {
+        const requestBody: UpdateAttendanceRequest = {
+            email: email,
+            status: status
+        };
+
+        if (environment.useLocalStorage) {
+            // Convert to lowercase for local storage
+            const localStatus = status === 'Going' ? 'going' : status === 'Maybe' ? 'maybe' : 'not_going';
+            return this.localStorageService.updateAttendanceStatus(String(eventId), localStatus as any, this.getCurrentUsername());
+        }
+
+        return this.http.patch<any>(`${this.baseUrl}/api/events/${eventId}/attendance/`, requestBody, { headers: this.getHeaders() }).pipe(
+            map(response => ({ success: true })),
+            catchError(error => {
+                console.error('Backend updateAttendance failed', error);
+                return throwError(() => error);
+            })
+        );
+    }
+
+    // ==================== INVITEE MANAGEMENT ====================
+
+    /**
+     * Add a new invitee to an event
+     * POST /api/events/{id}/invitees/
+     * Body: { email: string }
+     */
+    addInvitee(eventId: string | number, email: string): Observable<{ success: boolean, message?: string }> {
         const currentUser = this.getCurrentUsername();
 
-        // Use local storage if enabled
         if (environment.useLocalStorage) {
-            return this.localStorageService.updateAttendanceStatus(eventId, status, currentUser);
+            return this.localStorageService.addInvitee(String(eventId), email, currentUser);
         }
 
-        // Otherwise use backend API
-        return this.http.patch<{ success: boolean }>(
-            `${this.baseUrl}/api/events/${eventId}/attendance`,
-            { status },
-            { headers: this.getHeaders() }
-        ).pipe(
+        return this.http.post<any>(`${this.baseUrl}/api/events/${eventId}/invitees/`, { email }, { headers: this.getHeaders() }).pipe(
+            map(response => ({
+                success: true,
+                message: response.message || 'Invitee added successfully'
+            })),
             catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend updateAttendanceStatus failed, falling back to local storage');
-                return this.localStorageService.updateAttendanceStatus(eventId, status, currentUser);
+                console.warn('Backend addInvitee failed, falling back to local storage', error);
+                return this.localStorageService.addInvitee(String(eventId), email, currentUser);
             })
         );
     }
 
     /**
-     * Update attendance (alias for updateAttendanceStatus to match specification)
-     * @param id Event ID
-     * @param status Attendance status
+     * Remove an invitee from an event
+     * DELETE /api/events/{id}/invitees/{email}
      */
-    updateAttendance(
-        id: string,
-        status: 'going' | 'maybe' | 'not_going'
-    ): Observable<{ success: boolean }> {
-        return this.updateAttendanceStatus(id, status);
-    }
-
-    /**
-     * Add an invitee to an event (organizer only)
-     * @param eventId Event ID
-     * @param email Invitee email
-     */
-    addInvitee(
-        eventId: string,
-        email: string
-    ): Observable<{ success: boolean }> {
+    removeInvitee(eventId: string | number, email: string): Observable<{ success: boolean, message?: string }> {
         const currentUser = this.getCurrentUsername();
 
-        // Use local storage if enabled
         if (environment.useLocalStorage) {
-            return this.localStorageService.addInvitee(eventId, email, currentUser);
+            return this.localStorageService.removeInvitee(String(eventId), email, currentUser);
         }
 
-        // Otherwise use backend API
-        return this.http.post<{ success: boolean }>(
-            `${this.baseUrl}/api/events/${eventId}/invitees`,
-            { email },
-            { headers: this.getHeaders() }
-        ).pipe(
+        return this.http.delete<any>(`${this.baseUrl}/api/events/${eventId}/invitees/${encodeURIComponent(email)}`, { headers: this.getHeaders() }).pipe(
+            map(response => ({
+                success: true,
+                message: response.message || 'Invitee removed successfully'
+            })),
             catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend addInvitee failed, falling back to local storage');
-                return this.localStorageService.addInvitee(eventId, email, currentUser);
+                console.warn('Backend removeInvitee failed, falling back to local storage', error);
+                return this.localStorageService.removeInvitee(String(eventId), email, currentUser);
+            })
+        );
+    }
+
+    // ==================== SEARCH FUNCTIONALITY ====================
+
+    /**
+     * Search events with various filters
+     * GET /api/events/search/?keyword=...&date=...&role=...
+     */
+    searchEvents(params: {
+        keyword?: string;
+        date?: string;
+        role?: 'organizer' | 'attendee';
+    }): Observable<Event[]> {
+        let httpParams = new HttpParams();
+
+        if (params.keyword) {
+            httpParams = httpParams.set('keyword', params.keyword);
+        }
+        if (params.date) {
+            httpParams = httpParams.set('date', params.date);
+        }
+        if (params.role) {
+            httpParams = httpParams.set('role', params.role);
+        }
+
+        if (environment.useLocalStorage) {
+            // For local storage, we'll use the advanced search from LocalStorageService
+            const searchParams = {
+                keyword: params.keyword,
+                dateFrom: params.date,
+                dateTo: params.date,
+                role: params.role
+            };
+            return this.localStorageService.advancedSearch(searchParams, this.getCurrentUsername()).pipe(
+                map(response => response.events || [])
+            );
+        }
+
+        return this.http.get<EventsResponse>(`${this.baseUrl}/api/events/search/`, {
+            headers: this.getHeaders(),
+            params: httpParams
+        }).pipe(
+            map(response => response.events || response.results || []),
+            catchError(error => {
+                console.warn('Backend searchEvents failed, falling back to local storage', error);
+                const searchParams = {
+                    keyword: params.keyword,
+                    dateFrom: params.date,
+                    dateTo: params.date,
+                    role: params.role
+                };
+                return this.localStorageService.advancedSearch(searchParams, this.getCurrentUsername()).pipe(
+                    map(response => response.events || [])
+                );
             })
         );
     }
 
     /**
-     * Remove an invitee from an event (organizer only)
-     * @param eventId Event ID
-     * @param email Invitee email
+     * Get all events (both created and invited to)
      */
-    removeInvitee(
-        eventId: string,
-        email: string
-    ): Observable<{ success: boolean }> {
-        const currentUser = this.getCurrentUsername();
+    getAllEventsForUser(): Observable<Event[]> {
+        return new Observable(observer => {
+            const allEvents: Event[] = [];
+            let completed = 0;
 
-        // Use local storage if enabled
-        if (environment.useLocalStorage) {
-            return this.localStorageService.removeInvitee(eventId, email, currentUser);
-        }
+            this.getAllEvents().subscribe({
+                next: (events) => {
+                    allEvents.push(...events);
+                    completed++;
+                    if (completed === 2) {
+                        observer.next(allEvents);
+                        observer.complete();
+                    }
+                },
+                error: (err) => {
+                    completed++;
+                    if (completed === 2) {
+                        observer.next(allEvents);
+                        observer.complete();
+                    }
+                }
+            });
 
-        // Otherwise use backend API
-        return this.http.delete<{ success: boolean }>(
-            `${this.baseUrl}/api/events/${eventId}/invitees/${encodeURIComponent(email)}`,
-            { headers: this.getHeaders() }
-        ).pipe(
-            catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend removeInvitee failed, falling back to local storage');
-                return this.localStorageService.removeInvitee(eventId, email, currentUser);
-            })
-        );
-    }
-
-    // ==================== TASK MANAGEMENT ====================
-
-    /**
-     * Get tasks by event ID
-     * @param eventId Event ID
-     */
-    getTasksByEventId(eventId: string): Observable<TasksResponse> {
-        // Use local storage if enabled
-        if (environment.useLocalStorage) {
-            return this.localStorageService.getTasksByEventId(eventId);
-        }
-
-        // Otherwise use backend API
-        return this.http.get<TasksResponse>(
-            `${this.baseUrl}/api/events/${eventId}/tasks`,
-            { headers: this.getHeaders() }
-        ).pipe(
-            catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend getTasksByEventId failed, falling back to local storage');
-                return this.localStorageService.getTasksByEventId(eventId);
-            })
-        );
-    }
-
-    /**
-     * Create a new task
-     * @param taskData Task data
-     */
-    createTask(taskData: CreateTaskRequest): Observable<CreateTaskResponse> {
-        const currentUser = this.getCurrentUsername();
-
-        // Use local storage if enabled
-        if (environment.useLocalStorage) {
-            return this.localStorageService.createTask(taskData, currentUser);
-        }
-
-        // Otherwise use backend API
-        return this.http.post<CreateTaskResponse>(
-            `${this.baseUrl}/api/tasks`,
-            taskData,
-            { headers: this.getHeaders() }
-        ).pipe(
-            catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend createTask failed, falling back to local storage');
-                return this.localStorageService.createTask(taskData, currentUser);
-            })
-        );
-    }
-
-    /**
-     * Update a task
-     * @param taskId Task ID
-     * @param updates Task updates
-     */
-    updateTask(taskId: string, updates: Partial<Task>): Observable<{ success: boolean, task: Task }> {
-        // Use local storage if enabled
-        if (environment.useLocalStorage) {
-            return this.localStorageService.updateTask(taskId, updates);
-        }
-
-        // Otherwise use backend API
-        return this.http.patch<{ success: boolean, task: Task }>(
-            `${this.baseUrl}/api/tasks/${taskId}`,
-            updates,
-            { headers: this.getHeaders() }
-        ).pipe(
-            catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend updateTask failed, falling back to local storage');
-                return this.localStorageService.updateTask(taskId, updates);
-            })
-        );
-    }
-
-    /**
-     * Delete a task
-     * @param taskId Task ID
-     */
-    deleteTask(taskId: string): Observable<{ success: boolean }> {
-        const currentUser = this.getCurrentUsername();
-
-        // Use local storage if enabled
-        if (environment.useLocalStorage) {
-            return this.localStorageService.deleteTask(taskId, currentUser);
-        }
-
-        // Otherwise use backend API
-        return this.http.delete<{ success: boolean }>(
-            `${this.baseUrl}/api/tasks/${taskId}`,
-            { headers: this.getHeaders() }
-        ).pipe(
-            catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend deleteTask failed, falling back to local storage');
-                return this.localStorageService.deleteTask(taskId, currentUser);
-            })
-        );
-    }
-
-    // ==================== ADVANCED SEARCH ====================
-
-    /**
-     * Advanced search for events and/or tasks
-     * @param searchParams Search and filter parameters
-     */
-    advancedSearch(searchParams: SearchFilterParams): Observable<SearchResponse> {
-        const currentUser = this.getCurrentUsername();
-
-        // Use local storage if enabled
-        if (environment.useLocalStorage) {
-            return this.localStorageService.advancedSearch(searchParams, currentUser);
-        }
-
-        // Otherwise use backend API
-        return this.http.post<SearchResponse>(
-            `${this.baseUrl}/api/search`,
-            searchParams,
-            { headers: this.getHeaders() }
-        ).pipe(
-            catchError(error => {
-                // Fallback to local storage on error
-                console.warn('Backend advancedSearch failed, falling back to local storage');
-                return this.localStorageService.advancedSearch(searchParams, currentUser);
-            })
-        );
+            this.getInvitedEvents().subscribe({
+                next: (events) => {
+                    allEvents.push(...events);
+                    completed++;
+                    if (completed === 2) {
+                        observer.next(allEvents);
+                        observer.complete();
+                    }
+                },
+                error: (err) => {
+                    completed++;
+                    if (completed === 2) {
+                        observer.next(allEvents);
+                        observer.complete();
+                    }
+                }
+            });
+        });
     }
 }

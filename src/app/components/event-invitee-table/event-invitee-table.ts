@@ -25,6 +25,11 @@ export class EventInviteeTableComponent {
 
     constructor(private eventService: EventService) { }
 
+    ngOnInit() {
+        console.log('Invitee Table - eventId:', this.eventId);
+        console.log('Invitee Table - invitees:', this.invitees);
+    }
+
     addInvitee(): void {
         // Validate email
         if (!this.newInviteeEmail.trim()) {

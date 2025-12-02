@@ -160,10 +160,10 @@ export class CreateEventComponent implements OnInit {
     this.isSubmitting = true;
     this.error = null;
 
+    // Note: time is not sent to backend as per API specification
     const eventData: CreateEventRequest = {
       title: this.eventForm.get('title')?.value,
       date: this.eventForm.get('date')?.value,
-      time: this.eventForm.get('time')?.value,
       location: this.eventForm.get('location')?.value || undefined,
       description: this.eventForm.get('description')?.value || undefined,
       invitees: this.invitees.length > 0 ? this.invitees : undefined

@@ -44,6 +44,7 @@ export class EventDetailsPageComponent implements OnInit {
         // Get event ID from route parameters
         this.route.params.subscribe(params => {
             this.eventId = params['id'];
+            console.log('Event ID from route:', this.eventId);
             this.loadEvent();
         });
     }
@@ -52,23 +53,30 @@ export class EventDetailsPageComponent implements OnInit {
         this.isLoading = true;
         this.errorMessage = '';
 
+        console.log('Loading event with ID:', this.eventId);
+
         this.eventService.getEventById(this.eventId).subscribe({
             next: (event) => {
+                console.log('Event loaded successfully:', event);
+                console.log('Event invitees:', event.invitees);
+                console.log('Event role:', event.role);
                 this.event = event;
                 this.isOrganizer = event.role === 'organizer';
+                console.log('isOrganizer:', this.isOrganizer);
                 this.calculateAttendanceSummary();
                 this.isLoading = false;
             },
             error: (error) => {
+                console.error('Error loading event:', error);
                 this.errorMessage = 'Failed to load event. Please try again.';
                 this.isLoading = false;
-                console.error('Error loading event:', error);
             }
         });
     }
 
     calculateAttendanceSummary(): void {
         if (!this.event?.invitees) {
+            console.log('No invitees found');
             return;
         }
 
@@ -77,13 +85,19 @@ export class EventDetailsPageComponent implements OnInit {
         this.maybeCount = 0;
         this.notGoingCount = 0;
 
-        // Count based on invitee acceptance status
+        // Count based on invitee status
         this.event.invitees.forEach(invitee => {
-            if (invitee.status === 'accepted') {
+            console.log('Invitee status:', invitee.status);
+            if (invitee.status === 'Going') {
                 this.goingCount++;
+            } else if (invitee.status === 'Maybe') {
+                this.maybeCount++;
+            } else if (invitee.status === 'Not Going') {
+                this.notGoingCount++;
             }
-            // You can extend this if you track maybe/declined in invitee status
         });
+
+        console.log('Attendance counts:', { going: this.goingCount, maybe: this.maybeCount, notGoing: this.notGoingCount });
     }
 
     onRsvpChanged(): void {
