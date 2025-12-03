@@ -31,23 +31,7 @@ export class AuthService {
   }
 
   signup(userData: User): Observable<AuthResponse> {
-    // Use local storage if enabled
-    if (environment.useLocalStorage) {
-      return this.localStorageService.registerUser(
-        userData.username || 'user',
-        userData.email || '',
-        userData.password || ''
-      ).pipe(
-        tap(response => {
-          if (response.token) {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-          }
-        })
-      );
-    }
-
-    // Otherwise use backend API
+    // Use backend API only
     return this.http.post<AuthResponse>(`${this.baseUrl}/api/auth/signup/`, {
       username: userData.username,
       email: userData.email,
@@ -64,26 +48,14 @@ export class AuthService {
         }
       }),
       catchError(error => {
-        // Fallback to local storage on error
-        if (!environment.useLocalStorage) {
-          console.warn('Backend signup failed, falling back to local storage');
-          return this.localStorageService.registerUser(
-            userData.username || 'user',
-            userData.email || '',
-            userData.password || ''
-          ).pipe(
-            tap(response => {
-              if (response.token) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
-              }
-            })
-          );
-        }
-
+        console.error('Backend signup failed:', error);
         let errorMessage = 'An error occurred during signup';
         if (error.error?.message) {
           errorMessage = error.error.message;
+        } else if (error.status === 0) {
+          errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+        } else if (error.status === 400) {
+          errorMessage = error.error?.error || 'Invalid signup data';
         }
         return throwError(() => ({ error: errorMessage }));
       })
@@ -91,22 +63,7 @@ export class AuthService {
   }
 
   login(userData: { username: string, password: string }): Observable<AuthResponse> {
-    // Use local storage if enabled
-    if (environment.useLocalStorage) {
-      return this.localStorageService.authenticateUser(
-        userData.username,
-        userData.password
-      ).pipe(
-        tap(response => {
-          if (response.token) {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-          }
-        })
-      );
-    }
-
-    // Otherwise use backend API
+    // Use backend API only
     return this.http.post<AuthResponse>(`${this.baseUrl}/api/auth/login/`, userData, { headers: this.getHeaders() }).pipe(
       tap(response => {
         if (response.token) {
@@ -118,25 +75,14 @@ export class AuthService {
         }
       }),
       catchError(error => {
-        // Fallback to local storage on error  
-        if (!environment.useLocalStorage) {
-          console.warn('Backend login failed, falling back to local storage');
-          return this.localStorageService.authenticateUser(
-            userData.username,
-            userData.password
-          ).pipe(
-            tap(response => {
-              if (response.token) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
-              }
-            })
-          );
-        }
-
+        console.error('Backend login failed:', error);
         let errorMessage = 'Invalid credentials';
         if (error.error?.message) {
           errorMessage = error.error.message;
+        } else if (error.status === 0) {
+          errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+        } else if (error.status === 401) {
+          errorMessage = 'Invalid username or password';
         }
         return throwError(() => ({ error: errorMessage }));
       })

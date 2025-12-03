@@ -62,22 +62,18 @@ export class EventService {
      * GET /api/events/
      */
     getAllEvents(): Observable<Event[]> {
-        if (environment.useLocalStorage) {
-            return this.localStorageService.getEventsByRole('organizer', this.getCurrentUsername()).pipe(
-                map(response => response.events || [])
-            );
-        }
-
         return this.http.get<EventsResponse>(`${this.baseUrl}/api/events/`, { headers: this.getHeaders() }).pipe(
             map(response => {
                 // Handle both 'events' and 'results' array names
                 return response.events || response.results || [];
             }),
             catchError(error => {
-                console.warn('Backend getAllEvents failed, falling back to local storage', error);
-                return this.localStorageService.getEventsByRole('organizer', this.getCurrentUsername()).pipe(
-                    map(response => response.events || [])
-                );
+                console.error('Backend getAllEvents failed:', error);
+                return throwError(() => ({
+                    error: error.status === 0
+                        ? 'Cannot connect to server'
+                        : error.error?.message || 'Failed to load events'
+                }));
             })
         );
     }
@@ -87,19 +83,15 @@ export class EventService {
      * GET /api/events/invited/
      */
     getInvitedEvents(): Observable<Event[]> {
-        if (environment.useLocalStorage) {
-            return this.localStorageService.getEventsByRole('attendee', this.getCurrentUsername()).pipe(
-                map(response => response.events || [])
-            );
-        }
-
         return this.http.get<EventsResponse>(`${this.baseUrl}/api/events/invited/`, { headers: this.getHeaders() }).pipe(
             map(response => response.events || response.results || []),
             catchError(error => {
-                console.warn('Backend getInvitedEvents failed, falling back to local storage', error);
-                return this.localStorageService.getEventsByRole('attendee', this.getCurrentUsername()).pipe(
-                    map(response => response.events || [])
-                );
+                console.error('Backend getInvitedEvents failed:', error);
+                return throwError(() => ({
+                    error: error.status === 0
+                        ? 'Cannot connect to server'
+                        : error.error?.message || 'Failed to load invited events'
+                }));
             })
         );
     }
@@ -109,12 +101,6 @@ export class EventService {
      * POST /api/events/create/
      */
     createEvent(eventData: CreateEventRequest): Observable<CreateEventResponse> {
-        const currentUser = this.getCurrentUsername();
-
-        if (environment.useLocalStorage) {
-            return this.localStorageService.createEvent(eventData, currentUser);
-        }
-
         return this.http.post<any>(`${this.baseUrl}/api/events/create/`, eventData, { headers: this.getHeaders() }).pipe(
             map(response => {
                 // Normalize response structure
@@ -126,8 +112,14 @@ export class EventService {
                 };
             }),
             catchError(error => {
-                console.warn('Backend createEvent failed, falling back to local storage', error);
-                return this.localStorageService.createEvent(eventData, currentUser);
+                console.error('Backend createEvent failed:', error);
+                let errorMessage = 'Failed to create event';
+                if (error.status === 0) {
+                    errorMessage = 'Cannot connect to server';
+                } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                }
+                return throwError(() => ({ error: errorMessage }));
             })
         );
     }
@@ -137,14 +129,18 @@ export class EventService {
      * GET /api/events/{id}
      */
     getEventById(eventId: string | number): Observable<Event> {
-        if (environment.useLocalStorage) {
-            return this.localStorageService.getEventById(String(eventId));
-        }
-
         return this.http.get<Event>(`${this.baseUrl}/api/events/${eventId}`, { headers: this.getHeaders() }).pipe(
             catchError(error => {
-                console.warn('Backend getEventById failed, falling back to local storage', error);
-                return this.localStorageService.getEventById(String(eventId));
+                console.error('Backend getEventById failed:', error);
+                let errorMessage = 'Failed to load event details';
+                if (error.status === 0) {
+                    errorMessage = 'Cannot connect to server';
+                } else if (error.status === 404) {
+                    errorMessage = 'Event not found';
+                } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                }
+                return throwError(() => ({ error: errorMessage }));
             })
         );
     }
@@ -154,19 +150,20 @@ export class EventService {
      * PATCH /api/events/{id}/details/
      */
     updateEvent(eventId: string | number, updates: UpdateEventRequest): Observable<{ success: boolean, event?: Event }> {
-        if (environment.useLocalStorage) {
-            // LocalStorage service might not have this method, so we'll handle it
-            return of({ success: true });
-        }
-
         return this.http.patch<any>(`${this.baseUrl}/api/events/${eventId}/details/`, updates, { headers: this.getHeaders() }).pipe(
             map(response => ({
                 success: true,
                 event: response.event || response
             })),
             catchError(error => {
-                console.error('Backend updateEvent failed', error);
-                return throwError(() => error);
+                console.error('Backend updateEvent failed:', error);
+                let errorMessage = 'Failed to update event';
+                if (error.status === 0) {
+                    errorMessage = 'Cannot connect to server';
+                } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                }
+                return throwError(() => ({ error: errorMessage }));
             })
         );
     }
@@ -176,20 +173,22 @@ export class EventService {
      * DELETE /api/events/{id}/delete/
      */
     deleteEvent(eventId: string | number): Observable<{ success: boolean, message?: string }> {
-        const currentUser = this.getCurrentUsername();
-
-        if (environment.useLocalStorage) {
-            return this.localStorageService.deleteEvent(String(eventId), currentUser);
-        }
-
         return this.http.delete<any>(`${this.baseUrl}/api/events/${eventId}/delete/`, { headers: this.getHeaders() }).pipe(
             map(response => ({
                 success: true,
                 message: response.message || 'Event deleted successfully'
             })),
             catchError(error => {
-                console.warn('Backend deleteEvent failed, falling back to local storage', error);
-                return this.localStorageService.deleteEvent(String(eventId), currentUser);
+                console.error('Backend deleteEvent failed:', error);
+                let errorMessage = 'Failed to delete event';
+                if (error.status === 0) {
+                    errorMessage = 'Cannot connect to server';
+                } else if (error.status === 403) {
+                    errorMessage = 'You do not have permission to delete this event';
+                } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                }
+                return throwError(() => ({ error: errorMessage }));
             })
         );
     }
@@ -207,17 +206,17 @@ export class EventService {
             status: status
         };
 
-        if (environment.useLocalStorage) {
-            // Convert to lowercase for local storage
-            const localStatus = status === 'Going' ? 'going' : status === 'Maybe' ? 'maybe' : 'not_going';
-            return this.localStorageService.updateAttendanceStatus(String(eventId), localStatus as any, this.getCurrentUsername());
-        }
-
         return this.http.patch<any>(`${this.baseUrl}/api/events/${eventId}/attendance/`, requestBody, { headers: this.getHeaders() }).pipe(
             map(response => ({ success: true })),
             catchError(error => {
-                console.error('Backend updateAttendance failed', error);
-                return throwError(() => error);
+                console.error('Backend updateAttendance failed:', error);
+                let errorMessage = 'Failed to update attendance';
+                if (error.status === 0) {
+                    errorMessage = 'Cannot connect to server';
+                } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                }
+                return throwError(() => ({ error: errorMessage }));
             })
         );
     }
@@ -230,20 +229,22 @@ export class EventService {
      * Body: { email: string }
      */
     addInvitee(eventId: string | number, email: string): Observable<{ success: boolean, message?: string }> {
-        const currentUser = this.getCurrentUsername();
-
-        if (environment.useLocalStorage) {
-            return this.localStorageService.addInvitee(String(eventId), email, currentUser);
-        }
-
         return this.http.post<any>(`${this.baseUrl}/api/events/${eventId}/invitees/`, { email }, { headers: this.getHeaders() }).pipe(
             map(response => ({
                 success: true,
                 message: response.message || 'Invitee added successfully'
             })),
             catchError(error => {
-                console.warn('Backend addInvitee failed, falling back to local storage', error);
-                return this.localStorageService.addInvitee(String(eventId), email, currentUser);
+                console.error('Backend addInvitee failed:', error);
+                let errorMessage = 'Failed to add invitee';
+                if (error.status === 0) {
+                    errorMessage = 'Cannot connect to server';
+                } else if (error.status === 400) {
+                    errorMessage = error.error?.error || 'Invalid email or invitee already exists';
+                } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                }
+                return throwError(() => ({ error: errorMessage }));
             })
         );
     }
@@ -253,20 +254,20 @@ export class EventService {
      * DELETE /api/events/{id}/invitees/{email}
      */
     removeInvitee(eventId: string | number, email: string): Observable<{ success: boolean, message?: string }> {
-        const currentUser = this.getCurrentUsername();
-
-        if (environment.useLocalStorage) {
-            return this.localStorageService.removeInvitee(String(eventId), email, currentUser);
-        }
-
         return this.http.delete<any>(`${this.baseUrl}/api/events/${eventId}/invitees/${encodeURIComponent(email)}`, { headers: this.getHeaders() }).pipe(
             map(response => ({
                 success: true,
                 message: response.message || 'Invitee removed successfully'
             })),
             catchError(error => {
-                console.warn('Backend removeInvitee failed, falling back to local storage', error);
-                return this.localStorageService.removeInvitee(String(eventId), email, currentUser);
+                console.error('Backend removeInvitee failed:', error);
+                let errorMessage = 'Failed to remove invitee';
+                if (error.status === 0) {
+                    errorMessage = 'Cannot connect to server';
+                } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                }
+                return throwError(() => ({ error: errorMessage }));
             })
         );
     }
@@ -294,35 +295,20 @@ export class EventService {
             httpParams = httpParams.set('role', params.role);
         }
 
-        if (environment.useLocalStorage) {
-            // For local storage, we'll use the advanced search from LocalStorageService
-            const searchParams = {
-                keyword: params.keyword,
-                dateFrom: params.date,
-                dateTo: params.date,
-                role: params.role
-            };
-            return this.localStorageService.advancedSearch(searchParams, this.getCurrentUsername()).pipe(
-                map(response => response.events || [])
-            );
-        }
-
         return this.http.get<EventsResponse>(`${this.baseUrl}/api/events/search/`, {
             headers: this.getHeaders(),
             params: httpParams
         }).pipe(
             map(response => response.events || response.results || []),
             catchError(error => {
-                console.warn('Backend searchEvents failed, falling back to local storage', error);
-                const searchParams = {
-                    keyword: params.keyword,
-                    dateFrom: params.date,
-                    dateTo: params.date,
-                    role: params.role
-                };
-                return this.localStorageService.advancedSearch(searchParams, this.getCurrentUsername()).pipe(
-                    map(response => response.events || [])
-                );
+                console.error('Backend searchEvents failed:', error);
+                let errorMessage = 'Failed to search events';
+                if (error.status === 0) {
+                    errorMessage = 'Cannot connect to server';
+                } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                }
+                return throwError(() => ({ error: errorMessage }));
             })
         );
     }
