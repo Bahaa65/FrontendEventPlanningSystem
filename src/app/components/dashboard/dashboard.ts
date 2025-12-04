@@ -20,22 +20,18 @@ type FilterType = 'all' | 'upcoming' | 'past';
 export class DashboardComponent implements OnInit {
   currentUser: User | null = null;
 
-  // Events data
   myEvents: Event[] = [];
   invitedEvents: Event[] = [];
   displayedEvents: Event[] = [];
 
-  // UI State
   activeTab: TabType = 'my-events';
   isLoading: boolean = true;
   isLoadingEvents: boolean = false;
   error: string | null = null;
 
-  // Search and Filter
   searchQuery: string = '';
   activeFilter: FilterType = 'all';
 
-  // Delete confirmation
   showDeleteDialog: boolean = false;
   eventToDelete: Event | null = null;
 
@@ -43,7 +39,7 @@ export class DashboardComponent implements OnInit {
     private authService: AuthService,
     private eventService: EventService,
     public router: Router
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
@@ -97,7 +93,6 @@ export class DashboardComponent implements OnInit {
     this.searchQuery = '';
     this.activeFilter = 'all';
 
-    // Only load if data hasn't been loaded yet
     if (tab === 'my-events' && this.myEvents.length === 0) {
       this.loadEvents();
     } else if (tab === 'invited-events' && this.invitedEvents.length === 0) {
@@ -110,14 +105,12 @@ export class DashboardComponent implements OnInit {
   updateDisplayedEvents(): void {
     let events = this.activeTab === 'my-events' ? this.myEvents : this.invitedEvents;
 
-    // Apply filter
     if (this.activeFilter === 'upcoming') {
       events = events.filter(e => e.status === 'upcoming');
     } else if (this.activeFilter === 'past') {
       events = events.filter(e => e.status === 'past');
     }
 
-    // Apply search
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
       events = events.filter(e =>
@@ -130,41 +123,25 @@ export class DashboardComponent implements OnInit {
     this.displayedEvents = events;
   }
 
-  onSearchChange(): void {
-    this.updateDisplayedEvents();
-  }
+  onSearchChange(): void { this.updateDisplayedEvents(); }
+  setFilter(filter: FilterType): void { this.activeFilter = filter; this.updateDisplayedEvents(); }
 
-  setFilter(filter: FilterType): void {
-    this.activeFilter = filter;
-    this.updateDisplayedEvents();
-  }
-
-  viewEvent(event: Event): void {
-    // Navigate to event details page
-    this.router.navigate(['/events', event.id]);
-  }
+  viewEvent(event: Event): void { this.router.navigate(['/events', event.id]); }
 
   confirmDelete(event: Event): void {
-    if (event.role !== 'organizer') {
-      return; // Only organizers can delete
-    }
+    if (event.role !== 'organizer') return;
     this.eventToDelete = event;
     this.showDeleteDialog = true;
   }
 
-  cancelDelete(): void {
-    this.showDeleteDialog = false;
-    this.eventToDelete = null;
-  }
+  cancelDelete(): void { this.showDeleteDialog = false; this.eventToDelete = null; }
 
   deleteEvent(): void {
     if (!this.eventToDelete) return;
-
     const eventId = this.eventToDelete.id;
 
     this.eventService.deleteEvent(eventId).subscribe({
       next: () => {
-        // Remove from local array
         this.myEvents = this.myEvents.filter(e => e.id !== eventId);
         this.updateDisplayedEvents();
         this.cancelDelete();
@@ -176,20 +153,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  retryLoad(): void {
-    this.loadEvents();
-  }
+  retryLoad(): void { this.loadEvents(); }
+  goToCreateEvent(): void { this.router.navigate(['/events/create']); }
+  logout(): void { this.authService.logout(); this.router.navigate(['/login']); }
 
-  goToCreateEvent(): void {
-    this.router.navigate(['/events/create']);
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
-
-  // Helper method to format date
   formatDate(date: string): string {
     return new Date(date).toLocaleDateString('en-US', {
       weekday: 'short',
@@ -199,30 +166,16 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // Helper method to check if event is upcoming
-  isUpcoming(event: Event): boolean {
-    return event.status === 'upcoming';
-  }
+  isUpcoming(event: Event): boolean { return event.status === 'upcoming'; }
 
-  // Get stats for sidebar
-  get upcomingEventsCount(): number {
-    return this.myEvents.filter(e => e.status === 'upcoming').length;
-  }
+  get upcomingEventsCount(): number { return this.myEvents.filter(e => e.status === 'upcoming').length; }
 
   get upcomingNext7Days(): number {
     const now = new Date();
     const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    return this.myEvents.filter(e => {
-      if (e.status !== 'upcoming') return false;
-      const eventDate = new Date(e.date);
-      return eventDate >= now && eventDate <= next7Days;
-    }).length;
+    return this.myEvents.filter(e => e.status === 'upcoming' && new Date(e.date) >= now && new Date(e.date) <= next7Days).length;
   }
 
-  get pendingInvitations(): number {
-    return this.invitedEvents.filter(e =>
-      !e.attendanceStatus || e.attendanceStatus === 'Maybe'
-    ).length;
-  }
+  get pendingInvitations(): number { return this.invitedEvents.filter(e => !e.attendanceStatus || e.attendanceStatus === 'Maybe').length; }
 }
+  

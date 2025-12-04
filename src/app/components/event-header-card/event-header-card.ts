@@ -12,7 +12,15 @@ import { Event } from '../../models/event.model';
 export class EventHeaderCardComponent {
     @Input() event: Event | null = null;
     @Input() isOrganizer: boolean = false;
+    @Output() editEvent = new EventEmitter<void>();
     @Output() deleteEvent = new EventEmitter<void>();
+
+
+    onEdit(): void {
+
+        this.editEvent.emit();
+
+    }
 
     onDelete(): void {
         this.deleteEvent.emit();

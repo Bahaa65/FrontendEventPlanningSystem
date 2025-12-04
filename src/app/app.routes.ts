@@ -13,5 +13,6 @@ export const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
   { path: 'events/create', component: CreateEventComponent, canActivate: [AuthGuard] },
   { path: 'events/:id', component: EventDetailsPageComponent, canActivate: [AuthGuard] },
-  { path: '**', redirectTo: '/login' }
+  { path: '**', redirectTo: '/login' },
+  { path: 'events/:id/edit', component: CreateEventComponent, canActivate: [AuthGuard] },
 ];
