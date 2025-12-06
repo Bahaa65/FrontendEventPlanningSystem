@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../services/event.service';
@@ -29,7 +29,6 @@ export class EventDetailsPageComponent implements OnInit {
     errorMessage: string = '';
     showDeleteModal: boolean = false;
 
-    // Attendance summary for attendees
     goingCount: number = 0;
     maybeCount: number = 0;
     notGoingCount: number = 0;
@@ -37,11 +36,11 @@ export class EventDetailsPageComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private eventService: EventService
+        private eventService: EventService,
+        private cdr: ChangeDetectorRef  // Add this
     ) { }
 
     ngOnInit(): void {
-        // Get event ID from route parameters
         this.route.params.subscribe(params => {
             this.eventId = params['id'];
             console.log('Event ID from route:', this.eventId);
@@ -52,6 +51,7 @@ export class EventDetailsPageComponent implements OnInit {
     loadEvent(): void {
         this.isLoading = true;
         this.errorMessage = '';
+        this.event = null; // Reset event
 
         console.log('Loading event with ID:', this.eventId);
 
@@ -60,16 +60,25 @@ export class EventDetailsPageComponent implements OnInit {
                 console.log('Event loaded successfully:', event);
                 console.log('Event invitees:', event.invitees);
                 console.log('Event role:', event.role);
+                
                 this.event = event;
                 this.isOrganizer = event.role === 'organizer';
-                console.log('isOrganizer:', this.isOrganizer);
-                this.calculateAttendanceSummary();
                 this.isLoading = false;
+                
+                console.log('isOrganizer:', this.isOrganizer);
+                console.log('isLoading:', this.isLoading);
+                console.log('event object:', this.event);
+                
+                this.calculateAttendanceSummary();
+                
+                // Manually trigger change detection
+                this.cdr.detectChanges();
             },
             error: (error) => {
                 console.error('Error loading event:', error);
                 this.errorMessage = 'Failed to load event. Please try again.';
                 this.isLoading = false;
+                this.cdr.detectChanges();
             }
         });
     }
@@ -80,12 +89,10 @@ export class EventDetailsPageComponent implements OnInit {
             return;
         }
 
-        // Reset counts
         this.goingCount = 0;
         this.maybeCount = 0;
         this.notGoingCount = 0;
 
-        // Count based on invitee status
         this.event.invitees.forEach(invitee => {
             console.log('Invitee status:', invitee.status);
             if (invitee.status === 'Going') {
@@ -97,16 +104,18 @@ export class EventDetailsPageComponent implements OnInit {
             }
         });
 
-        console.log('Attendance counts:', { going: this.goingCount, maybe: this.maybeCount, notGoing: this.notGoingCount });
+        console.log('Attendance counts:', { 
+            going: this.goingCount, 
+            maybe: this.maybeCount, 
+            notGoing: this.notGoingCount 
+        });
     }
 
     onRsvpChanged(): void {
-        // Refresh event data after RSVP change
         this.loadEvent();
     }
 
     refreshEvent(): void {
-        // Refresh event data after invitee changes
         this.loadEvent();
     }
 

@@ -23,9 +23,7 @@ export class AuthService {
       'Content-Type': 'application/json'
     });
 
-    if (token) {
-      headers = headers.set('Authorization', `Token ${token}`);
-    }
+  if (token) headers = headers.set('Authorization', `Token ${token}`);
 
     return headers;
   }
