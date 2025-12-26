@@ -1,41 +1,41 @@
-#####
-# Stage 1: Build frontend
+# Stage 1: Build Angular app
 FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm ci
 
-# Install vite
+# Install Vite (if needed) globally
 RUN npm install -g vite
 
-# Copy source and build
+# Copy all source files
 COPY . .
+
+# Build Angular app
 RUN npm run build
 
-
-#####
-# Stage 2: Production
+# Stage 2: Nginx to serve Angular app
 FROM nginxinc/nginx-unprivileged:latest
 
 # Switch to root to copy files
 USER root
 
-# Copy nginx config
+# Copy custom Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built app from Stage 1
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy Angular build output to Nginx html folder
+COPY --from=build /app/dist/event-planner-frontend /usr/share/nginx/html
 
-# Adjust permissions for non-root user
+# Ensure proper ownership
 RUN chown -R nginx:nginx /usr/share/nginx/html
 
-# Switch back to non-root user
+# Switch back to nginx user
 USER nginx
 
+# Expose port
 EXPOSE 8080
 
-# Run nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start Nginx
+CMD ["nginx","-g","daemon off;"]
