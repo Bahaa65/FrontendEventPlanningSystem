@@ -23,11 +23,10 @@ FROM nginxinc/nginx-unprivileged:latest
 # Switch to root to copy files and update permissions
 USER root
 
-# Copy custom nginx configuration if needed
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy Angular build output to Nginx html directory
-# Update the folder name according to your Angular project name in angular.json
 COPY --from=build /app/dist/event-planner-frontend /usr/share/nginx/html
 
 # Set proper ownership for Nginx
